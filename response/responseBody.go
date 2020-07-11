@@ -1,5 +1,8 @@
 package response
 
+type LoginResponse struct {
+	UserToken string `json:"user_token"`
+}
 type TicketList struct {
 	Project  IdName   `json:"project"`
 	Statuses []Status `json:"statuses"`
@@ -23,8 +26,8 @@ type TicketDetail struct {
 	Title       string      `json:"title"`
 	Explanation string      `json:"explanation"`
 	Status      IdName      `json:"status"`
-	Worker      IdName      `json:"worker"`
-	Reporter    IdName      `json:"reporter"`
+	Worker      IdName      `json:"worker,omitempty"`
+	Reporter    IdName      `json:"reporter,omitempty"`
 	TicketImgs  []TicketImg `json:"ticket_imgs"`
 	Comments    []Comment   `json:"comments"`
 }
@@ -51,8 +54,8 @@ type StatusList struct {
 }
 
 type IdName struct {
-	Id   int    `json:"id"`
-	Name string `json:"name"`
+	Id   int    `json:"id,omitempty"`
+	Name string `json:"name,omitempty"`
 }
 
 type UserProject struct {
@@ -76,4 +79,8 @@ type Project struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Avatar      string `json:"avatar"`
+}
+
+type UserList struct {
+	Users []IdName `json:"users"`
 }

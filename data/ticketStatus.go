@@ -1,8 +1,5 @@
 package data
 
-import (
-)
-
 type TicketStatus struct {
 	ID int `gorm:"column:ticket_status_id;PRIMARY_KEY"`
 	TicketId int `gorm:"column:ticket_id"`
@@ -19,8 +16,8 @@ func UpdateTicketStatus(ticketStatusId int, statusId int)  {
 	Update("status_id", statusId)
 }
 
-func TicketStatusByTicketId (ticketId int) TicketStatus {
+func TicketStatusByTicketId (ticketId int) (TicketStatus, error) {
 	ticketStatus :=  TicketStatus{}
-	Db.Where("ticket_id = ?", ticketId).Find(&ticketStatus)
-	return ticketStatus
+	err := Db.Where("ticket_id = ?", ticketId).Find(&ticketStatus).Error
+	return ticketStatus, err
 }

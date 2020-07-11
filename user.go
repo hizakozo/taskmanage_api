@@ -1,16 +1,15 @@
 package main
 
 import (
+	"./constants"
 	"./data"
+	"./interceptor"
+	"./response"
 	"encoding/json"
-	"fmt"
 	"github.com/labstack/echo"
 	"net/http"
+	"strconv"
 )
-
-type TokenResponse struct {
-	UserToken string `json:"user_token"`
-}
 
 type SignUpForm struct {
 	Name        string `json:"name"`
@@ -54,26 +53,41 @@ func login(c echo.Context) error {
 		return err
 	}
 	auth, err := data.AuthByLoginId(form.LoginId)
-	if err != nil {
+	if isErr(err) {
 		return CreateErrorResponse(err, c)
 	}
-	fmt.Println(auth)
-
 	if err := passwordVerify(auth.Password, form.Password); err != nil {
 		return CreateErrorResponse(err, c)
 	}
 
 	user, err := data.UserById(auth.UserId)
-	if err != nil {
+	if isErr(err) {
 		return CreateErrorResponse(err, c)
 	}
-	var key, _ = MakeRandomStr()
+	var userToken, _ = MakeRandomStr()
 
 	userJson, _ := json.Marshal(user)
 
-	data.RedisSet(string(userJson), key)
+	data.RedisSet(string(userJson), userToken)
 
-	response := TokenResponse{UserToken: key}
+	return c.JSON(http.StatusOK, response.LoginResponse{UserToken: userToken})
+}
 
-	return c.JSON(http.StatusOK, response)
+func getUsersInProject(c echo.Context) error {
+	user := interceptor.User
+	projectId, err := strconv.Atoi(c.Param("project_id"))
+	if err != nil {
+		return CreateErrorResponse(err, c)
+	}
+	if err := data.UserProjectByUserIdProjectId(user.ID, projectId); err != nil {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{constants.PermissionException})
+	}
+	users := data.UserByProjectId(projectId)
+	var responseUsers []response.IdName
+	for _, user := range users {
+		responseUser := response.IdName{Id: user.ID, Name: user.Name}
+		responseUsers = append(responseUsers, responseUser)
+	}
+
+	return c.JSON(http.StatusOK, response.UserList{Users: responseUsers})
 }

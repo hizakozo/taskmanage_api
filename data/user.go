@@ -10,7 +10,7 @@ type User struct {
 	Isdelete int `gorm:"column:is_delete;default:'galeone'"`
 }
 
-func UserById(userId int) (User, error){
+func UserById(userId int) (User, error) {
 	user := User{ID: userId}
 	err := Db.Find(&user).Error
 	return user, err
@@ -19,4 +19,14 @@ func UserById(userId int) (User, error){
 func InsertUser(user User) int{
 	Db.Create(&user)
 	return user.ID
+}
+
+func UserByProjectId(projectId int) []User {
+	var users []User
+	Db.Select("u.user_id, user_name, avatar").
+		Table("user u").
+		Joins("join user_project up on u.user_id = up.user_id").
+		Where("up.project_id = ?", projectId).
+		Scan(&users)
+	return users
 }

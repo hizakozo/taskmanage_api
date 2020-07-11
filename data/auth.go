@@ -1,7 +1,5 @@
 package data
 
-import ()
-
 type Auth struct {
 	ID          int    `gorm:"column:auth_id;PRIMARY_KEY"`
 	UserId      int    `gorm:"column:user_id"`
@@ -14,7 +12,7 @@ func InsertAuth(auth Auth) {
 	Db.Create(&auth)
 }
 
-func AuthByLoginId(loginId string) (Auth, error) {
+func AuthByLoginId(loginId string) (Auth, error){
 	auth := Auth{}
 	err := Db.Select("auth_id, user_id, login_id, password, mail_address").
 		Table("auth").

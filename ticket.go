@@ -3,7 +3,9 @@ package main
 import (
 	"./constants"
 	"./data"
+	"./interceptor"
 	"./response"
+	"fmt"
 	"github.com/labstack/echo"
 	"net/http"
 	"sort"
@@ -25,6 +27,7 @@ type changeStatusForm struct {
 
 type updateTicketForm struct {
 	TicketId    int    `json:"ticket_id"`
+	ProjectId   int    `json:"project_id"`
 	Title       string `json:"title"`
 	Explanation string `json:"explanation"`
 	Reporter    int    `json:"reporter"`
@@ -32,25 +35,34 @@ type updateTicketForm struct {
 }
 
 func createTicket(c echo.Context) error {
-	user, err := data.RedisGet(c.Request().Header.Get("user_token"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{constants.TokenFailed})
-	}
+	user := interceptor.User
 
 	form := &createTicketForm{}
 	if err := c.Bind(form); err != nil {
 		return err
 	}
 
-	var ticket data.Ticket
+	title := form.Title
+	if title == "" {
+		title = "No title"
+	}
+	explanation := form.Explanation
+	if explanation == "" {
+		explanation = "No explanation"
+	}
+	ticket := data.Ticket{}
 	ticket.ProjectId = form.ProjectId
-	ticket.Title = form.Title
-	ticket.Explanation = form.Explanation
-	ticket.Reporter = user.ID
-	ticket.Worker = form.Worker
+	ticket.Title = title
+	ticket.Explanation = explanation
+	ticket.Reporter = &user.ID
+	ticket.Worker = &form.Worker
+	if form.Worker == 0 {
+		ticket.Worker = nil
+	}
+
 	insertTicketId := data.InsertTicket(ticket)
 
-	statuses, _ := data.StatusByProjectId(form.ProjectId)
+	statuses := data.StatusByProjectId(form.ProjectId)
 
 	sort.SliceStable(statuses, func(i, j int) bool {
 		return statuses[i].Progress < statuses[j].Progress
@@ -67,18 +79,15 @@ func getTicketList(c echo.Context) error {
 	if err != nil {
 		return CreateErrorResponse(err, c)
 	}
-	user, err := data.RedisGet(c.Request().Header.Get("user_token"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{constants.TokenFailed})
-	}
+	user := interceptor.User
 	project, err := data.ProjectById(projectId)
-	if err != nil {
+	if isErr(err) {
 		return CreateErrorResponse(err, c)
 	}
 	if err := data.UserProjectByUserIdProjectId(user.ID, projectId); err != nil {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{constants.PermissionException})
 	}
-	statusList, _ := data.StatusByProjectId(projectId)
+	statusList := data.StatusByProjectId(projectId)
 
 	responseProject := response.IdName{Id: project.ID, Name: project.ProjectName}
 
@@ -107,10 +116,7 @@ func getTicketList(c echo.Context) error {
 }
 
 func changeStatus(c echo.Context) error {
-	user, err := data.RedisGet(c.Request().Header.Get("user_token"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{constants.TokenFailed})
-	}
+	user := interceptor.User
 	form := &changeStatusForm{}
 	if err := c.Bind(form); err != nil {
 		return CreateErrorResponse(err, c)
@@ -120,12 +126,18 @@ func changeStatus(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{constants.PermissionException})
 	}
 
-	status, _ := data.StatusById(form.StatusId)
+	status, err := data.StatusById(form.StatusId)
+	if isErr(err) {
+		return CreateErrorResponse(err, c)
+	}
 	if form.ProjectId != status.ProjectId {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{constants.PermissionException})
 	}
 
-	findTicketStatus := data.TicketStatusByTicketId(form.TicketId)
+	findTicketStatus, err := data.TicketStatusByTicketId(form.TicketId)
+	if isErr(err) {
+		return CreateErrorResponse(err, c)
+	}
 
 	data.UpdateTicketStatus(findTicketStatus.ID, form.StatusId)
 
@@ -133,22 +145,19 @@ func changeStatus(c echo.Context) error {
 }
 
 func updateTicket(c echo.Context) error {
-	user, err := data.RedisGet(c.Request().Header.Get("user_token"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{constants.TokenFailed})
-	}
+	user := interceptor.User
 	form := &updateTicketForm{}
 	if err := c.Bind(form); err != nil {
 		return CreateErrorResponse(err, c)
 	}
+	//userにticket操作権限が存在するか
+	if err := data.UserProjectByUserIdProjectId(user.ID, form.ProjectId); err != nil {
+		return c.JSON(http.StatusBadRequest, ErrorResponse{constants.PermissionException})
+	}
 	//ticketが存在するか
 	ticket, err := data.TicketById(form.TicketId)
-	if err != nil {
+	if isErr(err) {
 		return CreateErrorResponse(err, c)
-	}
-	//userにticket操作権限が存在するか
-	if err := data.UserProjectByUserIdProjectId(user.ID, ticket.ProjectId); err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{constants.PermissionException})
 	}
 	//input reporterとprojectが紐づいているか
 	if err := data.UserProjectByUserIdProjectId(form.Reporter, ticket.ProjectId); err != nil {
@@ -158,11 +167,20 @@ func updateTicket(c echo.Context) error {
 	if err := data.UserProjectByUserIdProjectId(form.Worker, ticket.ProjectId); err != nil {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{constants.PermissionException})
 	}
-	editTicket := data.Ticket{ID: ticket.ID, ProjectId: ticket.ProjectId, Title: form.Title,
-		Explanation: form.Explanation, Reporter: form.Reporter, Worker: form.Worker}
-	if err := data.UpdateTicket(editTicket); err != nil {
-		return CreateErrorResponse(err, c)
+	title := form.Title
+	if title == "" {
+		title = "No title"
 	}
+	explanation := form.Explanation
+	if explanation == "" {
+		explanation = "No explanation"
+	}
+	editTicket := data.Ticket{ID: ticket.ID, ProjectId: ticket.ProjectId, Title: title,
+		Explanation: explanation, Reporter: &form.Reporter, Worker: &form.Worker}
+	if form.Worker == 0 {
+		editTicket.Worker = nil
+	}
+	data.UpdateTicket(editTicket)
 	return c.JSON(http.StatusOK, response.Ticket{Id: ticket.ID})
 }
 
@@ -171,48 +189,36 @@ func displayTicketDetail(c echo.Context) error {
 	if err != nil {
 		return CreateErrorResponse(err, c)
 	}
-	user, err := data.RedisGet(c.Request().Header.Get("user_token"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{constants.TokenFailed})
-	}
+	user := interceptor.User
 	ticket, err := data.TicketById(ticketId)
-	if err != nil {
+	if isErr(err) {
 		return CreateErrorResponse(err, c)
 	}
 	if err := data.UserProjectByUserIdProjectId(user.ID, ticket.ProjectId); err != nil {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{constants.PermissionException})
 	}
 	status, err := data.StatusByTicketId(ticketId)
-	if err != nil {
+	if isErr(err) {
 		return CreateErrorResponse(err, c)
 	}
-
 	responseStatus := response.IdName{Id: status.ID, Name: status.StatusName}
-	worker, err := data.UserById(ticket.Worker)
-	if err != nil {
-		return CreateErrorResponse(err, c)
-	}
+
+	worker, _ := data.UserById(*ticket.Worker)
 	responseWorker := response.IdName{Id: worker.ID, Name: worker.Name}
-	reporter, err := data.UserById(ticket.Reporter)
-	if err != nil {
-		return CreateErrorResponse(err, c)
-	}
+	reporter, _ := data.UserById(*ticket.Reporter)
 	responseReporter := response.IdName{Id: reporter.ID, Name: reporter.Name}
 	var responseTicketImgs []response.TicketImg
-	findTicketImgs, err := data.TicketImgById(ticketId)
-	if err != nil {
-		return CreateErrorResponse(err, c)
-	}
+	findTicketImgs := data.TicketImgById(ticketId)
 	for _, ticketImg := range findTicketImgs {
 		responseTicketImg := response.TicketImg{Id: ticketImg.ID, Path: ticketImg.TicketImgPath}
 		responseTicketImgs = append(responseTicketImgs, responseTicketImg)
 	}
 	var responseComments []response.Comment
 
-	findComments, _ := data.CommentByTicketId(ticketId)
+	findComments := data.CommentByTicketId(ticketId)
 	for _, comment := range findComments {
 		user, _ := data.UserById(comment.UserId)
-		findCommentImgs, _ := data.CommentImgByCommentId(comment.ID)
+		findCommentImgs := data.CommentImgByCommentId(comment.ID)
 		var responseCommentImgs []response.CommentImg
 		for _, commentImg := range findCommentImgs {
 			responseCommentImg := response.CommentImg{Id: commentImg.ID, Path: commentImg.CommentImgPath}
@@ -225,28 +231,25 @@ func displayTicketDetail(c echo.Context) error {
 	TicketDetail{TicketId: ticket.ID, Title: ticket.Title, Explanation: ticket.Explanation,
 		Status: responseStatus, Worker: responseWorker, Reporter: responseReporter,
 		TicketImgs: responseTicketImgs, Comments: responseComments}
+
 	return c.JSON(http.StatusOK, ticketDetail)
 }
 
 func deleteTicket(c echo.Context) error {
+	fmt.Println(c.Param("ticket_id"))
 	ticketId, err := strconv.Atoi(c.Param("ticket_id"))
 	if err != nil {
 		return CreateErrorResponse(err, c)
 	}
-	user, err := data.RedisGet(c.Request().Header.Get("user_token"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{constants.TokenFailed})
-	}
+	user := interceptor.User
 	ticket, err := data.TicketById(ticketId)
-	if err != nil {
+	if isErr(err) {
 		return CreateErrorResponse(err, c)
 	}
 	if err := data.UserProjectByUserIdProjectId(user.ID, ticket.ProjectId); err != nil {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{constants.PermissionException})
 	}
-	if err = data.DeleteTicket(ticketId); err != nil {
-		return CreateErrorResponse(err, c)
-	}
+	data.DeleteTicket(ticketId)
 
 	return c.JSON(http.StatusOK, "ticket delete")
 }

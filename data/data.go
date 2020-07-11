@@ -11,7 +11,7 @@ var Db *gorm.DB
 
 func init() {
 	var err error
-	Db, err = gorm.Open("mysql", "root:root@tcp(127.0.0.1:3306)/taskmanage")
+	Db, err = gorm.Open("mysql", "root:root@tcp(taskmanage-mysql)/taskmanage")
 	if(err != nil) {
 		log.Fatal(err)
 	}

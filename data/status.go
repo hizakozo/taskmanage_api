@@ -1,6 +1,8 @@
 package data
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type Status struct {
 	ID         int    `gorm:"column:status_id;PRIMARY_KEY"`
@@ -9,19 +11,19 @@ type Status struct {
 	StatusName string `gorm:"column:status_name"`
 }
 
-func InsertStatus(status Status) (Status, error) {
-	err := Db.Create(&status).Error
-	return status, err
+func InsertStatus(status Status) Status {
+	Db.Create(&status)
+	return status
 }
 
-func StatusByProjectId(projectId int) ([]Status, error) {
+func StatusByProjectId(projectId int) []Status {
 	var statuses []Status
-	err := Db.Table("status").
+	Db.Table("status").
 		Select("status_id, project_id, progress, status_name").
 		Where("project_id = ?", projectId).
 		Order("progress").
-		Scan(&statuses).Error
-	return statuses, err
+		Scan(&statuses)
+	return statuses
 }
 
 func StatusById(statusId int) (Status, error) {
@@ -40,19 +42,19 @@ func StatusByTicketId(ticketId int) (Status, error) {
 	return status, err
 }
 
-func MaxProgressByProjectId(projectId int) (int, error) {
+func MaxProgressByProjectId(projectId int) int {
 	status := Status{}
-	err := Db.Select("status_id, project_id, progress, status_name").
+	Db.Select("status_id, project_id, progress, status_name").
 		Table("status").
 		Where("project_id = ?", projectId).
 		Order("progress desc").Limit(1).
-		Find(&status).Error
-	return status.Progress, err
+		Find(&status)
+	return status.Progress
 }
 
-func UpdateStatus(status Status) (Status, error) {
-	err := Db.Model(&status).Updates(status).Error
-	return status, err
+func UpdateStatus(status Status) Status {
+	Db.Model(&status).Updates(status)
+	return status
 }
 
 func StatusByIdProjectId(statusId int, projectId int) (Status, error) {
@@ -64,10 +66,9 @@ func StatusByIdProjectId(statusId int, projectId int) (Status, error) {
 	return status, err
 }
 
-func UpdateProgress(statusId int, progress int) error {
+func UpdateProgress(statusId int, progress int) {
 	status := Status{ID: statusId}
-	err := Db.Model(&status).Update("progress", progress).Error
-	return err
+	Db.Model(&status).Update("progress", progress)
 }
 
 func DeleteStatusTransaction(statusId int, statuses []Status, trgProgress int) error {

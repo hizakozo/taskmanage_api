@@ -13,20 +13,20 @@ type CommentImg struct {
 	CommentImgPath string `gorm:"column:comment_img_path"`
 }
 
-func CommentByTicketId(ticketId int) ([]Comment, error) {
+func CommentByTicketId(ticketId int) []Comment {
 	var comments []Comment
-	err := Db.Table("comment").
+	Db.Table("comment").
 		Select("comment_id, user_id, ticket_id, comment").
 		Where("ticket_id = ?", ticketId).
-		Scan(&comments).Error
-	return comments, err
+		Scan(&comments)
+	return comments
 }
 
-func CommentImgByCommentId(commentId int) ([]CommentImg, error) {
+func CommentImgByCommentId(commentId int) []CommentImg {
 	var commentImgs []CommentImg
-	err := Db.Table("comment_img").
+	Db.Table("comment_img").
 		Select("comment_img_id, comment_id, comment_img_path").
 		Where("comment_id = ?", commentId).
-		Scan(&commentImgs).Error
-	return commentImgs, err
+		Scan(&commentImgs)
+	return commentImgs
 }

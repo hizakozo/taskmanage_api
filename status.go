@@ -3,6 +3,7 @@ package main
 import (
 	"./constants"
 	"./data"
+	"./interceptor"
 	"./response"
 	"github.com/labstack/echo"
 	"net/http"
@@ -26,15 +27,12 @@ func getStatusList(c echo.Context) error {
 	if err != nil {
 		return CreateErrorResponse(err, c)
 	}
-	user, err := data.RedisGet(c.Request().Header.Get("user_token"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{constants.TokenFailed})
-	}
+	user := interceptor.User
 	if err := data.UserProjectByUserIdProjectId(user.ID, projectId); err != nil {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{constants.PermissionException})
 	}
 	var responseStatuses []response.Status
-	statuses, _ := data.StatusByProjectId(projectId)
+	statuses := data.StatusByProjectId(projectId)
 	for _, status := range statuses {
 		responseStatus := response.Status{Id: status.ID, Progress: status.Progress, Name: status.StatusName}
 		responseStatuses = append(responseStatuses, responseStatus)
@@ -43,10 +41,7 @@ func getStatusList(c echo.Context) error {
 }
 
 func createStatus(c echo.Context) error {
-	user, err := data.RedisGet(c.Request().Header.Get("user_token"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{constants.TokenFailed})
-	}
+	user := interceptor.User
 	form := &CreateStatusForm{}
 	if err := c.Bind(form); err != nil {
 		return CreateErrorResponse(err, c)
@@ -55,28 +50,19 @@ func createStatus(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{constants.PermissionException})
 	}
 
-	progress, err := data.MaxProgressByProjectId(form.ProjectId)
-	if err != nil {
-		return CreateErrorResponse(err, c)
-	}
+	progress := data.MaxProgressByProjectId(form.ProjectId)
 	newProgress := progress + 1
 
 	status := data.Status{ProjectId: form.ProjectId,
 		Progress: newProgress, StatusName: form.StatusName}
-	insertStatus, err := data.InsertStatus(status)
-	if err != nil {
-		return CreateErrorResponse(err, c)
-	}
+	insertStatus := data.InsertStatus(status)
 
 	return c.JSON(http.StatusOK,
 		response.Status{Id: insertStatus.ID, Progress: insertStatus.Progress, Name: insertStatus.StatusName})
 }
 
 func updateStatus(c echo.Context) error {
-	user, err := data.RedisGet(c.Request().Header.Get("user_token"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{constants.TokenFailed})
-	}
+	user := interceptor.User
 	form := &UpdateStatusForm{}
 	if err := c.Bind(form); err != nil {
 		return CreateErrorResponse(err, c)
@@ -85,12 +71,12 @@ func updateStatus(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{constants.PermissionException})
 	}
 	targetStatus, err := data.StatusByIdProjectId(form.StatusId, form.ProjectId)
-	if err != nil {
+	if isErr(err) {
 		return CreateErrorResponse(err, c)
 	}
 	var beforeProgress = targetStatus.Progress
 	var afterProgress = form.Progress
-	findStatuses, _ := data.StatusByProjectId(form.ProjectId)
+	findStatuses := data.StatusByProjectId(form.ProjectId)
 
 	if isOutOfProgressRange(findStatuses, afterProgress) {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{"out of progress range"})
@@ -100,7 +86,7 @@ func updateStatus(c echo.Context) error {
 		for _, status := range findStatuses {
 			if afterProgress <= status.Progress && status.Progress < beforeProgress {
 				plusOneProgress := status.Progress + 1
-				_ = data.UpdateProgress(status.ID, plusOneProgress)
+				data.UpdateProgress(status.ID, plusOneProgress)
 			}
 		}
 	}
@@ -109,16 +95,13 @@ func updateStatus(c echo.Context) error {
 		for _, status := range findStatuses {
 			if beforeProgress < status.Progress && status.Progress <= afterProgress {
 				minusOneProgress := status.Progress - 1
-				_ = data.UpdateProgress(status.ID, minusOneProgress)
+				data.UpdateProgress(status.ID, minusOneProgress)
 			}
 		}
 	}
 	status := data.Status{ID: form.StatusId, ProjectId: form.ProjectId,
 		Progress: afterProgress, StatusName: form.StatusName}
-	updateStatus, err := data.UpdateStatus(status)
-	if err != nil {
-		return CreateErrorResponse(err, c)
-	}
+	updateStatus := data.UpdateStatus(status)
 	return c.JSON(http.StatusOK, response.Status{Id: updateStatus.ID,
 		Progress: updateStatus.Progress, Name: updateStatus.StatusName})
 }
@@ -128,12 +111,9 @@ func deleteStatus(c echo.Context) error {
 	if err != nil {
 		return CreateErrorResponse(err, c)
 	}
-	user, err := data.RedisGet(c.Request().Header.Get("user_token"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{constants.TokenFailed})
-	}
+	user := interceptor.User
 	trgStatus, err := data.StatusById(statusId)
-	if err != nil {
+	if isErr(err) {
 		return CreateErrorResponse(err, c)
 	}
 	if err := data.UserProjectByUserIdProjectId(user.ID, trgStatus.ProjectId); err != nil {
@@ -142,7 +122,7 @@ func deleteStatus(c echo.Context) error {
 	if 0 < len(data.TicketByStatusId(statusId)) {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{"Ticket exists"})
 	}
-	findStatuses, _ := data.StatusByProjectId(trgStatus.ProjectId)
+	findStatuses := data.StatusByProjectId(trgStatus.ProjectId)
 	if err := data.DeleteStatusTransaction(statusId, findStatuses, trgStatus.Progress); err != nil {
 		return CreateErrorResponse(err, c)
 	}

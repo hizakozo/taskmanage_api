@@ -1,14 +1,12 @@
 package data
 
-import ()
-
 type Ticket struct {
 	ID          int    `gorm:"column:ticket_id;PRIMARY_KEY"`
 	ProjectId   int    `gorm:"column:project_id"`
 	Title       string `gorm:"column:title"`
 	Explanation string `gorm:"column:explanation"`
-	Reporter    int    `gorm:"column:reporter"`
-	Worker      int    `gorm:"column:worker"`
+	Reporter    *int    `gorm:"column:reporter"`
+	Worker      *int    `gorm:"column:worker"`
 }
 
 type TicketImg struct {
@@ -38,24 +36,22 @@ func TicketById(ticketId int) (Ticket, error) {
 	return ticket, err
 }
 
-func UpdateTicket(ticket Ticket) error {
-	err := Db.Save(&ticket).Error
-	return err
+func UpdateTicket(ticket Ticket) {
+	Db.Save(&ticket)
 }
 
-func TicketImgById(ticketId int) ([]TicketImg, error) {
+func TicketImgById(ticketId int) []TicketImg {
 	var ticketImgs []TicketImg
-	err := Db.Table("ticket_img").
+	Db.Table("ticket_img").
 		Select("ticket_img_id, ticket_id, ticket_img_path").
 		Where("ticket_id = ?", ticketId).
-		Scan(&ticketImgs).Error
-	return ticketImgs, err
+		Scan(&ticketImgs)
+	return ticketImgs
 }
 
-func DeleteTicket(ticketId int) error {
+func DeleteTicket(ticketId int) {
 	ticket := Ticket{ID: ticketId}
-	err := Db.Delete(&ticket).Error
-	return err
+	Db.Delete(&ticket)
 }
 
 func TicketByStatusId(statusId int) []Ticket {

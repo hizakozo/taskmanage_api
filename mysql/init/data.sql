@@ -163,7 +163,7 @@ PRIMARY KEY (`comment_img_id`)
 
 insert into user (user_name) values ('test');
 insert into auth (user_id, login_id, password, mail_address) values
-((select max(user_id) from user), 'test', '726d81458bc7acd092005b43a9dded1c', 'reporter@reporter.com');
+((select max(user_id) from user), 'test', '$2a$10$.QOu/aJH9U45RbfQyaySOeVScRmDJixLwtf1xiuBzwmZvpGX2W6qO', 'reporter@reporter.com');
 
 insert into project(project_name, description, project_avatar) values
 ('test_project1', 'testのpuroject1だよ', 'http://test1'),

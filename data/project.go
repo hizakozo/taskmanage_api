@@ -1,7 +1,5 @@
 package data
 
-import ()
-
 type Project struct {
 	ID            int    `gorm:"column:project_id;PRIMARY_KEY"`
 	ProjectName   string `gorm:"column:project_name"`
@@ -29,13 +27,11 @@ func InsertProject(project Project) int {
 	return project.ID
 }
 
-func UpdateProject(project Project) error {
-	err := Db.Save(&project).Error
-	return err
+func UpdateProject(project Project) {
+	Db.Save(&project)
 }
 
-func DeleteProject(projectId int) error {
+func DeleteProject(projectId int) {
 	project := Project{ID: projectId}
-	err := Db.Delete(&project).Error
-	return err
+	Db.Delete(&project)
 }

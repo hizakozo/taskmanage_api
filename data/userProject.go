@@ -1,9 +1,6 @@
 package data
 
-import (
-	"github.com/jinzhu/gorm"
-	"fmt"
-)
+import "github.com/jinzhu/gorm"
 
 type UserProject struct {
 	ID int `gorm:"column:user_project_id;PRIMARY_KEY"`
@@ -16,12 +13,14 @@ func InsertUserProject(userProject UserProject) {
 }
 
 func UserProjectByUserIdProjectId(userId int, projectId int) error {
-	userProject := UserProject{}
+	var userProject []UserProject
 	err := Db.Select("user_project_id, user_id, project_id").
+	Table("user_project").
 	Where("user_id = ? AND project_id = ?", userId, projectId).
-	Find(&userProject).Error
+	Scan(&userProject).Error
+
 	if gorm.IsRecordNotFoundError(err) {
-		fmt.Println(err)
+		return err
 	}
-	return err
+	return nil
 }

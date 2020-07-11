@@ -3,10 +3,10 @@ package main
 import (
 	"./constants"
 	"./data"
+	"./interceptor"
 	"./mail"
 	"./response"
 	"encoding/json"
-	"fmt"
 	"github.com/labstack/echo"
 	"net/http"
 	"strconv"
@@ -39,11 +39,7 @@ type InviteInfo struct {
 }
 
 func getProjectList(c echo.Context) error {
-	user, err := data.RedisGet(c.Request().Header.Get("user_token"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{constants.TokenFailed})
-	}
-
+	user := interceptor.User
 	responseUser := response.User{Id: user.ID, Name: user.Name, Avatar: user.Avatar}
 
 	var responseProjects []response.Project
@@ -57,10 +53,7 @@ func getProjectList(c echo.Context) error {
 }
 
 func createProject(c echo.Context) error {
-	user, err := data.RedisGet(c.Request().Header.Get("user_token"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{constants.TokenFailed})
-	}
+	user := interceptor.User
 	form := &CreateProjectForm{}
 	if err := c.Bind(form); err != nil {
 		return err
@@ -82,19 +75,14 @@ func createProject(c echo.Context) error {
 		status.ProjectId = insertProjectId
 		status.Progress = v.Progress
 		status.StatusName = v.Name
-		if _, err = data.InsertStatus(status); err != nil {
-			return CreateErrorResponse(err, c)
-		}
+		 data.InsertStatus(status)
 	}
 
 	return c.JSON(http.StatusOK, "create project")
 }
 
 func updateProject(c echo.Context) error {
-	user, err := data.RedisGet(c.Request().Header.Get("user_token"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{constants.TokenFailed})
-	}
+	user := interceptor.User
 	form := &UpdateProjectForm{}
 	if err := c.Bind(form); err != nil {
 		return err
@@ -106,10 +94,7 @@ func updateProject(c echo.Context) error {
 
 	project := data.Project{ID: form.ProjectId, ProjectName: form.ProjectName,
 		Description: form.Description, ProjectAvatar: form.ProjectAvatar}
-	err = data.UpdateProject(project)
-	if err != nil {
-		return CreateErrorResponse(err, c)
-	}
+	data.UpdateProject(project)
 
 	return c.JSON(http.StatusOK, "project update")
 }
@@ -119,25 +104,17 @@ func deleteProject(c echo.Context) error {
 	if err != nil {
 		return CreateErrorResponse(err, c)
 	}
-	user, err := data.RedisGet(c.Request().Header.Get("user_token"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{constants.TokenFailed})
-	}
+	user := interceptor.User
 	if err := data.UserProjectByUserIdProjectId(user.ID, projectId); err != nil {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{constants.PermissionException})
 	}
-	if err = data.DeleteProject(projectId); err != nil {
-		return CreateErrorResponse(err, c)
-	}
+	data.DeleteProject(projectId)
 
 	return c.JSON(http.StatusOK, "ticket delete")
 }
 
 func inviteProject(c echo.Context) error {
-	user, err := data.RedisGet(c.Request().Header.Get("user_token"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{constants.TokenFailed})
-	}
+	user := interceptor.User
 	form := &InviteProjectForm{}
 	if err := c.Bind(form); err != nil {
 		return CreateErrorResponse(err, c)
@@ -147,7 +124,7 @@ func inviteProject(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{constants.PermissionException})
 	}
 	auth, err := data.AuthByMailAddress(form.MailAddress)
-	if err != nil {
+	if isErr(err) {
 		return CreateErrorResponse(err, c)
 	}
 	if err := data.UserProjectByUserIdProjectId(auth.ID, form.ProjectId); err == nil {
@@ -178,7 +155,6 @@ func joinProject(c echo.Context) error {
 	if err := json.Unmarshal([]byte(inviteInfoJson), inviteInfo); err != nil {
 		return CreateErrorResponse(err, c)
 	}
-	fmt.Print(inviteInfo)
 
 	if err := data.UserProjectByUserIdProjectId(inviteInfo.UserId, inviteInfo.ProjectId); err == nil {
 		return c.JSON(http.StatusBadRequest, ErrorResponse{"already exists user_project"})
