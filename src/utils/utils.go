@@ -1,9 +1,9 @@
-package main
+package utils
 
 import (
-	"math/rand"
-    "errors"
+	"errors"
 	"golang.org/x/crypto/bcrypt"
+	"math/rand"
 )
 
 func MakeRandomStr() (string, error) {
@@ -24,7 +24,7 @@ func MakeRandomStr() (string, error) {
     return result, nil
 }
 
-func createSafetyPass(password string) string {
+func CreateSafetyPass(password string) string {
 
     hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
@@ -34,6 +34,10 @@ func createSafetyPass(password string) string {
 }
 
 // パスワードがハッシュにマッチするかどうかを調べる
-func passwordVerify(hash, pw string) error {
+func PasswordVerify(hash, pw string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(pw))
+}
+
+func IsErr(err error) bool {
+	return err != nil
 }

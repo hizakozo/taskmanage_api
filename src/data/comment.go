@@ -30,3 +30,13 @@ func CommentImgByCommentId(commentId int) []CommentImg {
 		Scan(&commentImgs)
 	return commentImgs
 }
+
+func UpdateComment(commentId int, comment string)  {
+	updateComment := Comment{ID: commentId}
+	Db.Model(&updateComment).Update("comment", comment)
+}
+
+func InsertComment(comment Comment) (Comment, error) {
+	err := Db.Create(&comment).Error
+	return comment, err
+}

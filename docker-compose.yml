@@ -5,7 +5,7 @@ services:
     tty: true # コンテナの起動永続化
     ports:
       - "1313:1313"
-    container_name: 'taskmenage-app'
+    container_name: 'taskmanage-app'
     volumes:
       - .:/app # マウントディレクトリ指定
     networks:

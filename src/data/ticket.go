@@ -1,5 +1,7 @@
 package data
 
+import "github.com/jinzhu/gorm"
+
 type Ticket struct {
 	ID          int    `gorm:"column:ticket_id;PRIMARY_KEY"`
 	ProjectId   int    `gorm:"column:project_id"`
@@ -62,4 +64,18 @@ func TicketByStatusId(statusId int) []Ticket {
 		Where("ts.status_id = ?", statusId).
 		Scan(&tickets)
 	return tickets
+}
+
+func TicketByIdUserId(ticketId int, userId int) error {
+	ticket := Ticket{}
+	err := Db.Select("ticket_id, ticket_id, p.project_id, title, explanation, reporter, worker").
+		Table("ticket t").
+		Joins("join project p on ticket.project_id = p.project_id").
+		Joins("join user_project up on p.project_id = up.project_id").
+		Where("ticket_id = ? AND user_id = ?", ticketId, userId).
+		Find(&ticket).Error
+	if gorm.IsRecordNotFoundError(err) {
+		return err
+	}
+	return nil
 }

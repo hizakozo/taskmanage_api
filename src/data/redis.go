@@ -1,10 +1,10 @@
 package data
 
 import (
-	"github.com/go-redis/redis"
-	"fmt"
 	"context"
 	"encoding/json"
+	"fmt"
+	"github.com/go-redis/redis"
 )
 
 var client = redis.NewClient(&redis.Options{
@@ -34,4 +34,8 @@ func RedisGet(key string) (User, error) {
 func RedisGetInviteInfo(token string) (string, error) {
 	inviteInfoJson, err := client.Get(ctx, token).Result()
 	return inviteInfoJson, err
+}
+
+func RedisDelete(token string) {
+	client.Del(ctx, token)
 }

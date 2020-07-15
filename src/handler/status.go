@@ -1,35 +1,25 @@
-package main
+package handler
 
 import (
-	"./constants"
-	"./data"
-	"./interceptor"
-	"./response"
+	"../constants"
+	"../data"
+	"../form"
+	"../interceptor"
+	"../response"
+	"../utils"
 	"github.com/labstack/echo"
 	"net/http"
 	"strconv"
 )
 
-type CreateStatusForm struct {
-	ProjectId  int    `json:"project_id"`
-	StatusName string `json:"status_name"`
-}
-
-type UpdateStatusForm struct {
-	StatusId   int    `json:"status_id"`
-	ProjectId  int    `json:"project_id"`
-	Progress   int    `json:"progress"`
-	StatusName string `json:"status_name"`
-}
-
-func getStatusList(c echo.Context) error {
+func GetStatusList(c echo.Context) error {
 	projectId, err := strconv.Atoi(c.Param("project_id"))
 	if err != nil {
-		return CreateErrorResponse(err, c)
+		return response.CreateErrorResponse(err, c)
 	}
 	user := interceptor.User
 	if err := data.UserProjectByUserIdProjectId(user.ID, projectId); err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{constants.PermissionException})
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: constants.PermissionException})
 	}
 	var responseStatuses []response.Status
 	statuses := data.StatusByProjectId(projectId)
@@ -40,14 +30,14 @@ func getStatusList(c echo.Context) error {
 	return c.JSON(http.StatusOK, response.StatusList{Statuses: responseStatuses})
 }
 
-func createStatus(c echo.Context) error {
+func CreateStatus(c echo.Context) error {
 	user := interceptor.User
-	form := &CreateStatusForm{}
+	form := &form.CreateStatusForm{}
 	if err := c.Bind(form); err != nil {
-		return CreateErrorResponse(err, c)
+		return response.CreateErrorResponse(err, c)
 	}
 	if err := data.UserProjectByUserIdProjectId(user.ID, form.ProjectId); err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{constants.PermissionException})
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: constants.PermissionException})
 	}
 
 	progress := data.MaxProgressByProjectId(form.ProjectId)
@@ -61,25 +51,25 @@ func createStatus(c echo.Context) error {
 		response.Status{Id: insertStatus.ID, Progress: insertStatus.Progress, Name: insertStatus.StatusName})
 }
 
-func updateStatus(c echo.Context) error {
+func UpdateStatus(c echo.Context) error {
 	user := interceptor.User
-	form := &UpdateStatusForm{}
+	form := &form.UpdateStatusForm{}
 	if err := c.Bind(form); err != nil {
-		return CreateErrorResponse(err, c)
+		return response.CreateErrorResponse(err, c)
 	}
 	if err := data.UserProjectByUserIdProjectId(user.ID, form.ProjectId); err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{constants.PermissionException})
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: constants.PermissionException})
 	}
 	targetStatus, err := data.StatusByIdProjectId(form.StatusId, form.ProjectId)
-	if isErr(err) {
-		return CreateErrorResponse(err, c)
+	if utils.IsErr(err) {
+		return response.CreateErrorResponse(err, c)
 	}
 	var beforeProgress = targetStatus.Progress
 	var afterProgress = form.Progress
 	findStatuses := data.StatusByProjectId(form.ProjectId)
 
 	if isOutOfProgressRange(findStatuses, afterProgress) {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{"out of progress range"})
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: "out of progress range"})
 	}
 
 	if afterProgress < beforeProgress {
@@ -106,27 +96,27 @@ func updateStatus(c echo.Context) error {
 		Progress: updateStatus.Progress, Name: updateStatus.StatusName})
 }
 
-func deleteStatus(c echo.Context) error {
+func DeleteStatus(c echo.Context) error {
 	statusId, err := strconv.Atoi(c.Param("status_id"))
 	if err != nil {
-		return CreateErrorResponse(err, c)
+		return response.CreateErrorResponse(err, c)
 	}
 	user := interceptor.User
 	trgStatus, err := data.StatusById(statusId)
-	if isErr(err) {
-		return CreateErrorResponse(err, c)
+	if utils.IsErr(err) {
+		return response.CreateErrorResponse(err, c)
 	}
 	if err := data.UserProjectByUserIdProjectId(user.ID, trgStatus.ProjectId); err != nil {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{constants.PermissionException})
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: constants.PermissionException})
 	}
 	if 0 < len(data.TicketByStatusId(statusId)) {
-		return c.JSON(http.StatusBadRequest, ErrorResponse{"Ticket exists"})
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: "Ticket exists"})
 	}
 	findStatuses := data.StatusByProjectId(trgStatus.ProjectId)
 	if err := data.DeleteStatusTransaction(statusId, findStatuses, trgStatus.Progress); err != nil {
-		return CreateErrorResponse(err, c)
+		return response.CreateErrorResponse(err, c)
 	}
-	return c.JSON(http.StatusOK, SuccessResponse{"delete status"})
+	return c.JSON(http.StatusOK, response.SuccessResponse{Message: "delete status"})
 }
 
 func isOutOfProgressRange(statuses []data.Status, progress int) bool {
