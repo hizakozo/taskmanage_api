@@ -1,8 +1,8 @@
 package interceptor
 
 import (
-	"../constants"
-	"../data"
+	"taskmanage_api/constants"
+	"taskmanage_api/data"
 	"github.com/labstack/echo"
 	"net/http"
 )

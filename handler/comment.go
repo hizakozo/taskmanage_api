@@ -1,15 +1,15 @@
 package handler
 
 import (
-	"../data"
-	"../form"
-	"../interceptor"
-	"../response"
-	"../utils"
 	"github.com/labstack/echo"
 	"github.com/labstack/gommon/log"
 	"net/http"
 	"strconv"
+	"taskmanage_api/data"
+	"taskmanage_api/form"
+	"taskmanage_api/interceptor"
+	"taskmanage_api/response"
+	"taskmanage_api/utils"
 )
 
 func GetComment(c echo.Context) error {

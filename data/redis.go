@@ -17,14 +17,14 @@ var ctx = context.Background()
 
 func RedisSet(json string, key string) {
 	
-	err := client.Set(ctx, key, json, 0).Err()
+	err := client.Set(key, json, 0).Err()
     if err != nil {
         fmt.Println("redis.Client.Set Error:", err)
     }
 }
 
 func RedisGet(key string) (User, error) {
-	userInfoJson, _ := client.Get(ctx, key).Result()
+	userInfoJson, _ := client.Get(key).Result()
 	var user = new(User)
 	err := json.Unmarshal([]byte(userInfoJson), user)
 	var userInfo = User{user.ID, user.Name, user.Avatar, user.Isdelete}
@@ -32,10 +32,10 @@ func RedisGet(key string) (User, error) {
 }
 
 func RedisGetInviteInfo(token string) (string, error) {
-	inviteInfoJson, err := client.Get(ctx, token).Result()
+	inviteInfoJson, err := client.Get(token).Result()
 	return inviteInfoJson, err
 }
 
 func RedisDelete(token string) {
-	client.Del(ctx, token)
+	client.Del(token)
 }

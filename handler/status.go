@@ -1,15 +1,15 @@
 package handler
 
 import (
-	"../constants"
-	"../data"
-	"../form"
-	"../interceptor"
-	"../response"
-	"../utils"
 	"github.com/labstack/echo"
 	"net/http"
 	"strconv"
+	"taskmanage_api/constants"
+	"taskmanage_api/data"
+	"taskmanage_api/form"
+	"taskmanage_api/interceptor"
+	"taskmanage_api/response"
+	"taskmanage_api/utils"
 )
 
 func GetStatusList(c echo.Context) error {

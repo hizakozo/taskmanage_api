@@ -1,12 +1,12 @@
 package handler
 
 import (
-	"../constants"
-	"../data"
-	"../form"
-	"../interceptor"
-	"../response"
-	"../utils"
+	"taskmanage_api/constants"
+	"taskmanage_api/data"
+	"taskmanage_api/form"
+	"taskmanage_api/interceptor"
+	"taskmanage_api/response"
+	"taskmanage_api/utils"
 	"encoding/json"
 	"github.com/labstack/echo"
 	"mime/multipart"

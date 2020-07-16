@@ -1,10 +1,10 @@
 package main
 
 import (
-	"./handler"
-	"./interceptor"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
+	"taskmanage_api/handler"
+	"taskmanage_api/interceptor"
 )
 
 func main() {

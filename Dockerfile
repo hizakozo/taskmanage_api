@@ -9,6 +9,6 @@ RUN go get github.com/aws/aws-sdk-go/aws
 # コンテナ内に作業ディレクトリを作成
 RUN mkdir /app
 # コンテナログイン時のディレクトリ指定
-WORKDIR /app/src
+WORKDIR /app
 
 ADD . /app

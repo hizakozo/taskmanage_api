@@ -1,18 +1,18 @@
 package handler
 
 import (
-	"../constants"
-	"../data"
-	"../form"
-	"../interceptor"
-	"../mail"
-	"../model"
-	"../response"
-	"../utils"
 	"encoding/json"
 	"github.com/labstack/echo"
 	"net/http"
 	"strconv"
+	"taskmanage_api/constants"
+	"taskmanage_api/data"
+	"taskmanage_api/form"
+	"taskmanage_api/interceptor"
+	"taskmanage_api/mail"
+	"taskmanage_api/model"
+	"taskmanage_api/response"
+	"taskmanage_api/utils"
 )
 
 func GetProjectList(c echo.Context) error {
