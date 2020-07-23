@@ -11,4 +11,4 @@ RUN mkdir /app
 # コンテナログイン時のディレクトリ指定
 WORKDIR /app
 
-ADD . /app
+ADD .. /app

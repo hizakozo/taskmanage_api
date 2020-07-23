@@ -3,8 +3,8 @@ package main
 import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
-	"taskmanage_api/handler"
-	"taskmanage_api/interceptor"
+	"taskmanage_api/src/handler"
+	"taskmanage_api/src/interceptor"
 )
 
 func main() {
@@ -15,6 +15,7 @@ func main() {
 	e.POST("/user/signUp", handler.SignUp)
 	e.GET("/user/:project_id", handler.GetUsersInProject, interceptor.CsrfAuth)
 	e.POST("/user/signOut", handler.SignOut)
+	e.GET("/user/profile", handler.GetUserProfile, interceptor.CsrfAuth)
 
 	e.GET("/projects", handler.GetProjectList, interceptor.CsrfAuth)
 	e.POST("/projects", handler.CreateProject, interceptor.CsrfAuth)

@@ -1,15 +1,42 @@
 version: '3'
 services:
-  app:
-    build: .
-    tty: true # コンテナの起動永続化
+#  app:
+#    build: .
+#    tty: true # コンテナの起動永続化
+#    ports:
+#      - "1314:1313"
+#    container_name: 'taskmanage-app'
+#    volumes:
+#      - .:/app # マウントディレクトリ指定
+#    networks:
+#      - app-net
+
+  localstack:
+    image: atlassianlabs/localstack
     ports:
-      - "1314:1313"
-    container_name: 'taskmanage-app'
+      - 8080:8080 # dashboard
+      - 4572:4572 # edge port
+    environment:
+      - SERVICES=s3
+      - AWS_DEFAULT_REGION=ap-northeast-1
+      - DATA_DIR=/tmp/localstack/data
+      - AWS_ACCESS_KEY_ID=tekitou
+      - AWS_SECRET_ACCESS_KEY=tekitou
+      - AWS_S3_ENDPOINT=http://localstack:4572
+    container_name: 'taskmanage-local-s3'
     volumes:
-      - .:/app # マウントディレクトリ指定
-    networks:
-      - app-net
+      - ./docker/localstack/:/docker-entrypoint-initaws.d
+
+  awscli:
+    image: xueshanf/awscli
+    environment:
+      - AWS_DEFAULT_REGION=ap-northeast-1
+      - AWS_DEFAULT_OUTPUT=json
+      - AWS_ACCESS_KEY_ID=tekitou
+      - AWS_SECRET_ACCESS_KEY=tekitou
+    depends_on:
+      - localstack
+    command: aws --endpoint-url=http://localstack:4572 s3 mb s3://taskmanage/
 
   mysql:
     image: mysql:5.7
