@@ -65,7 +65,7 @@ func UpdateProject(c echo.Context) error {
 		return err
 	}
 
-	if err := data.UserProjectByUserIdProjectId(user.ID, form.ProjectId); err != nil {
+	if userProject := data.UserProjectByUserIdProjectId(user.ID, form.ProjectId); len(userProject) == 0 {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: constants.PermissionException})
 	}
 
@@ -82,7 +82,7 @@ func DeleteProject(c echo.Context) error {
 		return response.CreateErrorResponse(err, c)
 	}
 	user := interceptor.User
-	if err := data.UserProjectByUserIdProjectId(user.ID, projectId); err != nil {
+	if userProject := data.UserProjectByUserIdProjectId(user.ID, projectId); len(userProject) == 0 {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: constants.PermissionException})
 	}
 	data.DeleteProject(projectId)
@@ -97,14 +97,14 @@ func InviteProject(c echo.Context) error {
 		return response.CreateErrorResponse(err, c)
 	}
 
-	if err := data.UserProjectByUserIdProjectId(user.ID, form.ProjectId); err != nil {
+	if userProject := data.UserProjectByUserIdProjectId(user.ID, form.ProjectId); len(userProject) == 0 {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: constants.PermissionException})
 	}
 	auth, err := data.AuthByMailAddress(form.MailAddress)
 	if utils.IsErr(err) {
 		return response.CreateErrorResponse(err, c)
 	}
-	if err := data.UserProjectByUserIdProjectId(auth.ID, form.ProjectId); err == nil {
+	if userProject := data.UserProjectByUserIdProjectId(auth.ID, form.ProjectId); len(userProject) > 0 {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: "already exists user_project"})
 	}
 	inviteInfo := model.InviteInfo{ProjectId: form.ProjectId, UserId: auth.UserId}
@@ -114,7 +114,10 @@ func InviteProject(c echo.Context) error {
 	}
 	token, _ := utils.MakeRandomStr()
 	data.RedisSet(string(inviteInfoJson), token)
-	message := "http://localhost:8081/join/" + token
+	message :=
+		"プロジェクトの招待を受け取りました。"+ "\n"+
+		"以下のURLをクリックしてください。"+ "\n"+
+		constants.Params.FrontUrl + "join/" + token
 	if err := mail.SendMail(auth.MailAddress, message); err != nil {
 		return response.CreateErrorResponse(err, c)
 	}
@@ -133,7 +136,7 @@ func JoinProject(c echo.Context) error {
 		return response.CreateErrorResponse(err, c)
 	}
 
-	if err := data.UserProjectByUserIdProjectId(inviteInfo.UserId, inviteInfo.ProjectId); err == nil {
+	if userProject := data.UserProjectByUserIdProjectId(inviteInfo.UserId, inviteInfo.ProjectId); len(userProject) > 0 {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: "already exists user_project"})
 	}
 

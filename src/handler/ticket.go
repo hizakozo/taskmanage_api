@@ -52,7 +52,7 @@ func GetTicketList(c echo.Context) error {
 	if utils.IsErr(err) {
 		return response.CreateErrorResponse(err, c)
 	}
-	if err := data.UserProjectByUserIdProjectId(user.ID, projectId); err != nil {
+	if userProject := data.UserProjectByUserIdProjectId(user.ID, project.ID); len(userProject) == 0 {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: constants.PermissionException})
 	}
 	statusList := data.StatusByProjectId(projectId)
@@ -93,7 +93,7 @@ func ChangeStatus(c echo.Context) error {
 		return response.CreateErrorResponse(err, c)
 	}
 
-	if err := data.UserProjectByUserIdProjectId(user.ID, form.ProjectId); err != nil {
+	if userProject := data.UserProjectByUserIdProjectId(user.ID, form.ProjectId); len(userProject) == 0 {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: constants.PermissionException})
 	}
 
@@ -122,7 +122,7 @@ func UpdateTicket(c echo.Context) error {
 		return response.CreateErrorResponse(err, c)
 	}
 	//userにticket操作権限が存在するか
-	if err := data.UserProjectByUserIdProjectId(user.ID, form.ProjectId); err != nil {
+	if userProject := data.UserProjectByUserIdProjectId(user.ID, form.ProjectId); len(userProject) == 0 {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: constants.PermissionException})
 	}
 	//ticketが存在するか
@@ -131,11 +131,11 @@ func UpdateTicket(c echo.Context) error {
 		return response.CreateErrorResponse(err, c)
 	}
 	//input reporterとprojectが紐づいているか
-	if err := data.UserProjectByUserIdProjectId(form.Reporter, ticket.ProjectId); err != nil {
+	if userProject := data.UserProjectByUserIdProjectId(form.Reporter, ticket.ProjectId); len(userProject) == 0 {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: constants.PermissionException})
 	}
 	//input workerとprojectが紐づいているか
-	if err := data.UserProjectByUserIdProjectId(form.Worker, ticket.ProjectId); err != nil {
+	if userProject := data.UserProjectByUserIdProjectId(form.Worker, ticket.ProjectId); len(userProject) == 0 {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: constants.PermissionException})
 	}
 	title := form.Title
@@ -161,7 +161,7 @@ func GetTicketDetail(c echo.Context) error {
 	if utils.IsErr(err) {
 		return response.CreateErrorResponse(err, c)
 	}
-	if err := data.UserProjectByUserIdProjectId(user.ID, ticket.ProjectId); err != nil {
+	if userProject := data.UserProjectByUserIdProjectId(user.ID, ticket.ProjectId); len(userProject) == 0 {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: constants.PermissionException})
 	}
 	status, err := data.StatusByTicketId(ticketId)
@@ -206,7 +206,7 @@ func DeleteTicket(c echo.Context) error {
 	if utils.IsErr(err) {
 		return response.CreateErrorResponse(err, c)
 	}
-	if err := data.UserProjectByUserIdProjectId(user.ID, ticket.ProjectId); err != nil {
+	if userProject := data.UserProjectByUserIdProjectId(user.ID, ticket.ProjectId); len(userProject) == 0 {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: constants.PermissionException})
 	}
 	data.DeleteTicket(ticketId)

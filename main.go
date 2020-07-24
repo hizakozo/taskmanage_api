@@ -22,7 +22,7 @@ func main() {
 	e.PUT("/projects", handler.UpdateProject, interceptor.CsrfAuth)
 	e.DELETE("/projects/:project_id", handler.DeleteProject, interceptor.CsrfAuth)
 	e.POST("/projects/invite", handler.InviteProject, interceptor.CsrfAuth)
-	e.POST("/projects/join", handler.JoinProject, interceptor.CsrfAuth)
+	e.POST("/projects/join", handler.JoinProject)
 
 	e.POST("/tickets", handler.CreateTicket, interceptor.CsrfAuth)
 	e.GET("/tickets/:project_id", handler.GetTicketList, interceptor.CsrfAuth)

@@ -8,8 +8,8 @@ import (
 func SendMail(mailAddress string, message string) error {
 	auth := smtp.PlainAuth(
 		"",
-		"sample@gmail.com", // foo@gmail.com
-		"sample",
+		"development.kendo.yasui@gmail.com", // foo@gmail.com
+		"lzuooffyabdctfbq",
 		"smtp.gmail.com",
 	)
 
@@ -18,7 +18,7 @@ func SendMail(mailAddress string, message string) error {
 	err := smtp.SendMail(
 		"smtp.gmail.com:587",
 		auth,
-		"sample@gmail.com", // 送信元
+		"development@gmail.com", // 送信元
 		[]string{mailAddress}, // 送信先
 		[]byte(message),
 	)

@@ -18,7 +18,7 @@ func GetStatusList(c echo.Context) error {
 		return response.CreateErrorResponse(err, c)
 	}
 	user := interceptor.User
-	if err := data.UserProjectByUserIdProjectId(user.ID, projectId); err != nil {
+	if userProject := data.UserProjectByUserIdProjectId(user.ID, projectId); len(userProject) == 0 {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: constants.PermissionException})
 	}
 	var responseStatuses []response.Status
@@ -36,7 +36,7 @@ func CreateStatus(c echo.Context) error {
 	if err := c.Bind(form); err != nil {
 		return response.CreateErrorResponse(err, c)
 	}
-	if err := data.UserProjectByUserIdProjectId(user.ID, form.ProjectId); err != nil {
+	if userProject := data.UserProjectByUserIdProjectId(user.ID, form.ProjectId); len(userProject) == 0 {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: constants.PermissionException})
 	}
 
@@ -57,7 +57,7 @@ func UpdateStatus(c echo.Context) error {
 	if err := c.Bind(form); err != nil {
 		return response.CreateErrorResponse(err, c)
 	}
-	if err := data.UserProjectByUserIdProjectId(user.ID, form.ProjectId); err != nil {
+	if userProject := data.UserProjectByUserIdProjectId(user.ID, form.ProjectId); len(userProject) == 0 {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: constants.PermissionException})
 	}
 	targetStatus, err := data.StatusByIdProjectId(form.StatusId, form.ProjectId)
@@ -106,7 +106,7 @@ func DeleteStatus(c echo.Context) error {
 	if utils.IsErr(err) {
 		return response.CreateErrorResponse(err, c)
 	}
-	if err := data.UserProjectByUserIdProjectId(user.ID, trgStatus.ProjectId); err != nil {
+	if userProject := data.UserProjectByUserIdProjectId(user.ID, trgStatus.ProjectId); len(userProject) == 0 {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: constants.PermissionException})
 	}
 	if 0 < len(data.TicketByStatusId(statusId)) {

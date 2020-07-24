@@ -82,8 +82,8 @@ func GetUsersInProject(c echo.Context) error {
 	if err != nil {
 		return response.CreateErrorResponse(err, c)
 	}
-	if err := data.UserProjectByUserIdProjectId(user.ID, projectId); err != nil {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{constants.PermissionException})
+	if userProject := data.UserProjectByUserIdProjectId(user.ID, projectId); len(userProject) == 0 {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: constants.PermissionException})
 	}
 	users := data.UserByProjectId(projectId)
 	var responseUsers []response.User

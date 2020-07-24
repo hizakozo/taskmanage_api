@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-redis/redis"
+	"taskmanage_api/src/constants"
 )
 
 var client = redis.NewClient(&redis.Options{
 	//Addr:     "taskmanage-redis:6379",
-	Addr:     "127.0.0.1:6379",
+	Addr:     constants.Params.RedisAddr,
 	Password: "", // no password set
 	DB:       0,  // use default DB
 })
