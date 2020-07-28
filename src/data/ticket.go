@@ -7,8 +7,8 @@ type Ticket struct {
 	ProjectId   int    `gorm:"column:project_id"`
 	Title       string `gorm:"column:title"`
 	Explanation string `gorm:"column:explanation"`
-	Reporter    *int    `gorm:"column:reporter"`
-	Worker      *int    `gorm:"column:worker"`
+	Reporter    *int   `gorm:"column:reporter"`
+	Worker      *int   `gorm:"column:worker"`
 }
 
 type TicketImg struct {

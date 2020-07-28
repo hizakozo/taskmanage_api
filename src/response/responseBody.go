@@ -102,7 +102,7 @@ type UserProfile struct {
 }
 
 type ProjectTickets struct {
-	Id int           `json:"id"`
-	Name string      `json:"name"`
+	Id      int      `json:"id"`
+	Name    string   `json:"name"`
 	Tickets []Ticket `json:"tickets,omitempty"`
 }

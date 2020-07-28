@@ -9,7 +9,6 @@ import (
 )
 
 var client = redis.NewClient(&redis.Options{
-	//Addr:     "taskmanage-redis:6379",
 	Addr:     constants.Params.RedisAddr,
 	Password: "", // no password set
 	DB:       0,  // use default DB
@@ -18,11 +17,11 @@ var client = redis.NewClient(&redis.Options{
 var ctx = context.Background()
 
 func RedisSet(json string, key string) {
-	
+
 	err := client.Set(key, json, 0).Err()
-    if err != nil {
-        fmt.Println("redis.Client.Set Error:", err)
-    }
+	if err != nil {
+		fmt.Println("redis.Client.Set Error:", err)
+	}
 }
 
 func RedisGet(key string) (User, error) {

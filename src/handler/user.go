@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/labstack/echo"
 	"gopkg.in/go-playground/validator.v9"
 	"net/http"
@@ -15,6 +16,7 @@ import (
 )
 
 func SignUp(c echo.Context) error {
+	fmt.Println(234)
 	form := &form.SignUpForm{}
 	if err := c.Bind(form); err != nil {
 		return response.CreateErrorResponse(err, c)
@@ -33,7 +35,7 @@ func SignUp(c echo.Context) error {
 	if _, err := data.AuthByMailAddress(mailAddress); err == nil {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: "mail address id is already exists"})
 	}
-	user :=  data.User{Name: name}
+	user := data.User{Name: name}
 	if avatar != nil {
 		fileName := "/user/" + avatar.Filename
 		src, err := avatar.Open()

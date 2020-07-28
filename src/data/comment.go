@@ -31,7 +31,7 @@ func CommentImgByCommentId(commentId int) []CommentImg {
 	return commentImgs
 }
 
-func UpdateComment(commentId int, comment string)  {
+func UpdateComment(commentId int, comment string) {
 	updateComment := Comment{ID: commentId}
 	Db.Model(&updateComment).Update("comment", comment)
 }

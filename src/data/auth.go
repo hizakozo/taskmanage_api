@@ -14,7 +14,7 @@ func InsertAuth(auth Auth) {
 	Db.Create(&auth)
 }
 
-func AuthByLoginId(loginId string) (*Auth, error){
+func AuthByLoginId(loginId string) (*Auth, error) {
 	auth := Auth{}
 	err := Db.Select("auth_id, user_id, login_id, password, mail_address").
 		Table("auth").

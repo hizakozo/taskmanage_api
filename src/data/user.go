@@ -1,9 +1,9 @@
 package data
 
 type User struct {
-    ID   int `gorm:"column:user_id;PRIMARY_KEY"`
-    Name string `gorm:"column:user_name"`
-    Avatar string
+	ID       int    `gorm:"column:user_id;PRIMARY_KEY"`
+	Name     string `gorm:"column:user_name"`
+	Avatar   string
 	Isdelete int `gorm:"column:is_delete;default:'galeone'"`
 }
 
@@ -16,7 +16,7 @@ func UserById(userId int) (User, error) {
 	return user, err
 }
 
-func InsertUser(user User) int{
+func InsertUser(user User) int {
 	Db.Create(&user)
 	return user.ID
 }

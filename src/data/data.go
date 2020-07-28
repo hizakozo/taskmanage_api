@@ -9,14 +9,14 @@ import (
 
 var Db *gorm.DB
 
-var url = constants.Params.DbUser+":"+constants.Params.DbPass+"@tcp("+constants.Params.DbUrl+")/taskmanage"
+var url = constants.Params.DbUser + ":" + constants.Params.DbPass + "@tcp(" + constants.Params.DbUrl + ")/taskmanage"
 
 func init() {
 	var err error
 	Db, err = gorm.Open(
-		"mysql", 
+		"mysql",
 		url)
-	if(err != nil) {
+	if err != nil {
 		log.Fatal(err)
 	}
 	log.Println("DB connected !!")

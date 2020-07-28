@@ -17,7 +17,7 @@ type EnvParam struct {
 var Params EnvParam
 
 func init() {
-	if err := godotenv.Load(fmt.Sprintf("env/local.env")); err != nil {
+	if err := godotenv.Load(fmt.Sprintf("env/%s.env", os.Getenv("GO_ENV"))); err != nil {
 	}
 	Params.DbUrl = os.Getenv("DB_URL")
 	Params.DbUser = os.Getenv("DB_USER")

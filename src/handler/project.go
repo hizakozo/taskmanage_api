@@ -115,9 +115,9 @@ func InviteProject(c echo.Context) error {
 	token, _ := utils.MakeRandomStr()
 	data.RedisSet(string(inviteInfoJson), token)
 	message :=
-		"プロジェクトの招待を受け取りました。"+ "\n"+
-		"以下のURLをクリックしてください。"+ "\n"+
-		constants.Params.FrontUrl + "join/" + token
+		"プロジェクトの招待を受け取りました。" + "\n" +
+			"以下のURLをクリックしてください。" + "\n" +
+			constants.Params.FrontUrl + "join/" + token
 	if err := mail.SendMail(auth.MailAddress, message); err != nil {
 		return response.CreateErrorResponse(err, c)
 	}
@@ -141,6 +141,8 @@ func JoinProject(c echo.Context) error {
 	}
 
 	data.InsertUserProject(data.UserProject{UserId: inviteInfo.UserId, ProjectId: inviteInfo.ProjectId})
+
+	data.RedisDelete(form.Token)
 
 	return c.JSON(http.StatusOK,
 		response.UserProject{UserId: inviteInfo.UserId, ProjectId: inviteInfo.ProjectId})

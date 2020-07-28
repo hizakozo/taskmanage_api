@@ -19,7 +19,7 @@ func SendMail(mailAddress string, message string) error {
 		"smtp.gmail.com:587",
 		auth,
 		"development@gmail.com", // 送信元
-		[]string{mailAddress}, // 送信先
+		[]string{mailAddress},   // 送信先
 		[]byte(message),
 	)
 	return err
