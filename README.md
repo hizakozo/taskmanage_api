@@ -1,5 +1,5 @@
 # タスク管理アプリケーションのAPI
-※セキュリティ観点から環境変数設定ファイルをgit管理から除外していますので、動作はしません。
+※local mailサーバーは立てれていないので、環境変数を除外しました。よってmail機能は動きません。
 
 ### 主な機能
 - 複数ユーザーとプロジェクトを共有できる
@@ -9,3 +9,8 @@
 
 ### フロントエンド（Vue.js）
 https://github.com/hizakozo/taskmanage_front
+
+### docker start
+`docker-compose up -d`
+### app start
+`GO_ENV=local go run main.go`
