@@ -13,16 +13,15 @@ import (
 	"taskmanage_api/src/interceptor"
 	"taskmanage_api/src/response"
 	"taskmanage_api/src/utils"
+	"taskmanage_api/src/exception"
 )
 
 func SignUp(c echo.Context) error {
 	fmt.Println(234)
 	form := &form.SignUpForm{}
-	if err := c.Bind(form); err != nil {
-		return response.CreateErrorResponse(err, c)
-	}
+	_ = utils.BindForm(form, c)
 	if err := validator.New().Struct(form); err != nil {
-		return response.CreateErrorResponse(err, c)
+		return exception.InputFailed(c)
 	}
 	name := c.FormValue("name")
 	loginId := c.FormValue("login_id")
@@ -30,19 +29,19 @@ func SignUp(c echo.Context) error {
 	mailAddress := c.FormValue("mail_address")
 	avatar, _ := c.FormFile("avatar")
 	if _, err := data.AuthByLoginId(loginId); err == nil {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: "login id is already exists"})
+		return exception.DataAlreadyExists(c, "login id")
 	}
 	if _, err := data.AuthByMailAddress(mailAddress); err == nil {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: "mail address id is already exists"})
+		return exception.DataAlreadyExists(c, "mail address")
 	}
 	user := data.User{Name: name}
 	if avatar != nil {
 		fileName := "/user/" + avatar.Filename
 		src, err := avatar.Open()
 		defer src.Close()
-		_, err = utils.S3PutObject("taskmanage", fileName, src)
+		_, err = utils.S3PutObject(fileName, src)
 		if err != nil {
-			return response.CreateErrorResponse(err, c)
+			return exception.FileUploadFailed(c)
 		}
 		user.Avatar = fileName
 	}
@@ -52,27 +51,23 @@ func SignUp(c echo.Context) error {
 
 	data.InsertAuth(auth)
 
-	return c.JSON(http.StatusOK, id)
+	return c.JSON(http.StatusOK, response.SuccessResponse{Message: constants.ProcessingComplete})
 }
 
 func SignIn(c echo.Context) error {
 	form := &form.LoginForm{}
-	if err := c.Bind(form); err != nil {
-		return response.CreateErrorResponse(err, c)
-	}
+	_ = utils.BindForm(form, c)
 	if err := validator.New().Struct(form); err != nil {
-		return response.CreateErrorResponse(err, c)
+		return exception.InputFailed(c)
 	}
 	auth, err := data.AuthByLoginId(form.LoginId)
+	if utils.IsErr(err) {
+		return exception.NotFoundData(c)
+	}
 	err = utils.PasswordVerify(auth.Password, form.Password)
 	user, err := data.UserById(auth.UserId)
-	if utils.IsErr(err) {
-		return response.CreateErrorResponse(err, c)
-	}
 	var userToken, _ = utils.MakeRandomStr()
-
 	userJson, _ := json.Marshal(user)
-
 	data.RedisSet(string(userJson), userToken)
 
 	return c.JSON(http.StatusOK, response.LoginResponse{UserToken: userToken, UserId: user.ID})
@@ -81,18 +76,18 @@ func SignIn(c echo.Context) error {
 func GetUsersInProject(c echo.Context) error {
 	user := interceptor.User
 	projectId, err := strconv.Atoi(c.Param("project_id"))
-	if err != nil {
-		return response.CreateErrorResponse(err, c)
+	if utils.IsErr(err) {
+		return exception.FormBindException(c)
 	}
 	if userProject := data.UserProjectByUserIdProjectId(user.ID, projectId); len(userProject) == 0 {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: constants.PermissionException})
+		return exception.PermissionException(c)
 	}
 	users := data.UserByProjectId(projectId)
 	var responseUsers []response.User
 	for _, user := range users {
 		responseUser := response.User{Id: user.ID, Name: user.Name}
 		if user.Avatar != "" {
-			responseUser.Avatar = "http://127.0.0.1:4572/taskmanage" + user.Avatar
+			responseUser.Avatar = constants.Params.S3EndPoint + constants.Params.S3BucketName + user.Avatar
 		}
 		responseUsers = append(responseUsers, responseUser)
 	}
@@ -102,17 +97,14 @@ func GetUsersInProject(c echo.Context) error {
 
 func SignOut(c echo.Context) error {
 	token := c.Request().Header.Get("user_token")
-	user, err := data.RedisGet(token)
+	user, _ := data.RedisGet(token)
 	form := &form.LogOutForm{}
-	err = c.Bind(form)
-	if err != nil {
-		return response.CreateErrorResponse(err, c)
-	}
+	_ = utils.BindForm(form, c)
 	if user.ID != form.UserId {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: "bad Request"})
+		return exception.PermissionException(c)
 	}
 	data.RedisDelete(token)
-	return c.JSON(http.StatusOK, response.SuccessResponse{Message: "sign out"})
+	return c.JSON(http.StatusOK, response.SuccessResponse{Message: constants.ProcessingComplete})
 }
 
 func GetUserProfile(c echo.Context) error {
@@ -120,7 +112,7 @@ func GetUserProfile(c echo.Context) error {
 	user, err := data.UserById(userId)
 	auth, err := data.AuthByUserId(userId)
 	if utils.IsErr(err) {
-		return response.CreateErrorResponse(err, c)
+		return exception.NotFoundData(c)
 	}
 	projects := data.ProjectsByUserId(userId)
 	responseUser := response.User{Id: user.ID, Name: user.Name,

@@ -2,9 +2,8 @@ package interceptor
 
 import (
 	"github.com/labstack/echo"
-	"net/http"
-	"taskmanage_api/src/constants"
 	"taskmanage_api/src/data"
+	"taskmanage_api/src/exception"
 )
 
 var User = data.User{}
@@ -13,7 +12,7 @@ func CsrfAuth(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		user, err := data.RedisGet(c.Request().Header.Get("user_token"))
 		if err != nil {
-			return c.JSON(http.StatusBadRequest, constants.TokenFailed)
+			return exception.TokenException(c)
 		}
 		User = user
 		if err := next(c); err != nil {

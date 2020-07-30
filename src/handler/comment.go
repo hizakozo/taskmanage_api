@@ -2,10 +2,10 @@ package handler
 
 import (
 	"github.com/labstack/echo"
-	"github.com/labstack/gommon/log"
 	"net/http"
 	"strconv"
 	"taskmanage_api/src/data"
+	"taskmanage_api/src/exception"
 	"taskmanage_api/src/form"
 	"taskmanage_api/src/interceptor"
 	"taskmanage_api/src/response"
@@ -15,10 +15,8 @@ import (
 func GetComment(c echo.Context) error {
 	ticketId, err := strconv.Atoi(c.Param("ticket_id"))
 	if utils.IsErr(err) {
-		return response.CreateErrorResponse(err, c)
+		return exception.FormBindException(c)
 	}
-	_ = interceptor.User
-
 	var responseComments []response.Comment
 	findComments := data.CommentByTicketId(ticketId)
 	for _, comment := range findComments {
@@ -39,18 +37,14 @@ func GetComment(c echo.Context) error {
 
 func CreateComment(c echo.Context) error {
 	form := &form.CreateCommentForm{}
-	err := c.Bind(form)
+	_ = utils.BindForm(form, c)
 	user := interceptor.User
-	err = data.TicketByIdUserId(form.TicketId, user.ID)
+	err := data.TicketByIdUserId(form.TicketId, user.ID)
 	if utils.IsErr(err) {
-		log.Error(err)
-		return response.CreateErrorResponse(err, c)
+		return exception.PermissionException(c)
 	}
 	comment := data.Comment{UserId: user.ID, TicketId: form.TicketId, Comment: form.Comment}
-	insertComment, err := data.InsertComment(comment)
-	if utils.IsErr(err) {
-		return response.CreateErrorResponse(err, c)
-	}
+	insertComment := data.InsertComment(comment)
 	return c.JSON(http.StatusOK,
 		response.CommentCreate{TicketId: insertComment.TicketId, Comment:
 		response.Comment{Id: insertComment.ID, Comment: insertComment.Comment}})

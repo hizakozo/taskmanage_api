@@ -2,6 +2,7 @@ package data
 
 import (
 	"fmt"
+	"github.com/jinzhu/gorm"
 )
 
 type Status struct {
@@ -26,20 +27,23 @@ func StatusByProjectId(projectId int) []Status {
 	return statuses
 }
 
-func StatusById(statusId int) (Status, error) {
+func StatusById(statusId int) (*Status, error) {
 	status := Status{ID: statusId}
 	err := Db.Select("status_id, project_id, progress, status_name").
 		Find(&status).Error
-	return status, err
+	if gorm.IsRecordNotFoundError(err) {
+		return nil, err
+	}
+	return &status, err
 }
 
-func StatusByTicketId(ticketId int) (Status, error) {
+func StatusByTicketId(ticketId int) Status {
 	status := Status{}
-	err := Db.Table("status s").Select("s.status_id, project_id, progress, status_name").
+	Db.Table("status s").Select("s.status_id, project_id, progress, status_name").
 		Joins("join ticket_status ts on s.status_id = ts.status_id").
 		Where("ts.ticket_id = ?", ticketId).
-		Find(&status).Error
-	return status, err
+		Find(&status)
+	return status
 }
 
 func MaxProgressByProjectId(projectId int) int {
@@ -71,12 +75,11 @@ func UpdateProgress(statusId int, progress int) {
 	Db.Model(&status).Update("progress", progress)
 }
 
-func DeleteStatusTransaction(statusId int, statuses []Status, trgProgress int) error {
+func DeleteStatusTransaction(statusId int, statuses []Status, trgProgress int) {
 	deleteStatus := Status{ID: statusId}
 	tx := Db.Begin()
 	if err := tx.Delete(&deleteStatus).Error; err != nil {
 		tx.Rollback()
-		return err
 	}
 	var err error
 	for _, status := range statuses {
@@ -89,7 +92,6 @@ func DeleteStatusTransaction(statusId int, statuses []Status, trgProgress int) e
 	if err != nil {
 		fmt.Print(123)
 		tx.Rollback()
-		return err
 	}
-	return tx.Commit().Error
+	tx.Commit()
 }

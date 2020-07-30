@@ -36,7 +36,7 @@ func UpdateComment(commentId int, comment string) {
 	Db.Model(&updateComment).Update("comment", comment)
 }
 
-func InsertComment(comment Comment) (Comment, error) {
-	err := Db.Create(&comment).Error
-	return comment, err
+func InsertComment(comment Comment) Comment {
+	Db.Create(&comment)
+	return comment
 }

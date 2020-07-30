@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"taskmanage_api/src/constants"
 	"taskmanage_api/src/data"
+	"taskmanage_api/src/exception"
 	"taskmanage_api/src/form"
 	"taskmanage_api/src/interceptor"
 	"taskmanage_api/src/response"
@@ -17,9 +18,7 @@ func CreateTicket(c echo.Context) error {
 	user := interceptor.User
 
 	form := &form.CreateTicketForm{}
-	if err := c.Bind(form); err != nil {
-		return err
-	}
+	_ = utils.BindForm(form, c)
 
 	title := form.Title
 	if title == "" {
@@ -39,21 +38,22 @@ func CreateTicket(c echo.Context) error {
 	ticketStatus.TicketId = insertTicketId
 	ticketStatus.StatusId = form.StatusId
 	data.InsertTicketStatus(ticketStatus)
-	return c.JSON(http.StatusOK, "ticket create")
+	return c.JSON(http.StatusOK, constants.ProcessingComplete)
 }
 
 func GetTicketList(c echo.Context) error {
 	projectId, err := strconv.Atoi(c.Param("project_id"))
-	if err != nil {
-		return response.CreateErrorResponse(err, c)
+	if utils.IsErr(err) {
+		return exception.FormBindException(c)
 	}
+
 	user := interceptor.User
 	project, err := data.ProjectById(projectId)
 	if utils.IsErr(err) {
-		return response.CreateErrorResponse(err, c)
+		return exception.NotFoundData(c)
 	}
 	if userProject := data.UserProjectByUserIdProjectId(user.ID, project.ID); len(userProject) == 0 {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: constants.PermissionException})
+		return exception.PermissionException(c)
 	}
 	statusList := data.StatusByProjectId(projectId)
 
@@ -66,7 +66,7 @@ func GetTicketList(c echo.Context) error {
 		responseStatus.Id = status.ID
 		responseStatus.Progress = status.Progress
 		responseStatus.Name = status.StatusName
-		var responseTickets []response.Ticket
+		responseTickets := []response.Ticket{}
 		ticketList := data.TicketByProjectIdStatusId(projectId, status.ID)
 		for _, ticket := range ticketList {
 			var responseTicket response.Ticket
@@ -74,7 +74,7 @@ func GetTicketList(c echo.Context) error {
 			responseTicket.Title = ticket.Title
 			if ticket.Worker != nil {
 				worker, _ := data.UserById(*ticket.Worker)
-				responseTicket.Avatar = "http://127.0.0.1:4572/taskmanage" + worker.Avatar
+				responseTicket.Avatar = constants.Params.S3EndPoint + constants.Params.S3BucketName + worker.Avatar
 			}
 			responseTickets = append(responseTickets, responseTicket)
 		}
@@ -89,94 +89,91 @@ func GetTicketList(c echo.Context) error {
 func ChangeStatus(c echo.Context) error {
 	user := interceptor.User
 	form := &form.ChangeStatusForm{}
-	if err := c.Bind(form); err != nil {
-		return response.CreateErrorResponse(err, c)
-	}
+	_ = utils.BindForm(form, c)
 
 	if userProject := data.UserProjectByUserIdProjectId(user.ID, form.ProjectId); len(userProject) == 0 {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: constants.PermissionException})
+		return exception.PermissionException(c)
 	}
 
 	status, err := data.StatusById(form.StatusId)
 	if utils.IsErr(err) {
-		return response.CreateErrorResponse(err, c)
+		return exception.NotFoundData(c)
 	}
 	if form.ProjectId != status.ProjectId {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: constants.PermissionException})
+		return exception.PermissionException(c)
 	}
 
 	findTicketStatus, err := data.TicketStatusByTicketId(form.TicketId)
 	if utils.IsErr(err) {
-		return response.CreateErrorResponse(err, c)
+		return exception.NotFoundData(c)
 	}
 
 	data.UpdateTicketStatus(findTicketStatus.ID, form.StatusId)
 
-	return c.JSON(http.StatusOK, response.SuccessResponse{Message: "update ticket_status"})
+	return c.JSON(http.StatusOK, response.SuccessResponse{Message: constants.ProcessingComplete})
 }
 
 func UpdateTicket(c echo.Context) error {
 	user := interceptor.User
 	form := &form.UpdateTicketForm{}
-	if err := c.Bind(form); err != nil {
-		return response.CreateErrorResponse(err, c)
-	}
-	//userにticket操作権限が存在するか
-	if userProject := data.UserProjectByUserIdProjectId(user.ID, form.ProjectId); len(userProject) == 0 {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: constants.PermissionException})
-	}
+	_ = utils.BindForm(form, c)
 	//ticketが存在するか
 	ticket, err := data.TicketById(form.TicketId)
 	if utils.IsErr(err) {
-		return response.CreateErrorResponse(err, c)
+		return exception.NotFoundData(c)
 	}
-	//input reporterとprojectが紐づいているか
-	if userProject := data.UserProjectByUserIdProjectId(form.Reporter, ticket.ProjectId); len(userProject) == 0 {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: constants.PermissionException})
+	//userにticket操作権限が存在するか
+	if userProject := data.UserProjectByUserIdProjectId(user.ID, ticket.ProjectId); len(userProject) == 0 {
+		return exception.PermissionException(c)
 	}
 	//input workerとprojectが紐づいているか
 	if userProject := data.UserProjectByUserIdProjectId(form.Worker, ticket.ProjectId); len(userProject) == 0 {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: constants.PermissionException})
+		return exception.PermissionException(c)
+	}
+	//input statusがprojectと紐づいているか
+	if _, err := data.StatusByIdProjectId(form.StatusId, ticket.ProjectId); utils.IsErr(err) {
+		return exception.PermissionException(c)
 	}
 	title := form.Title
 	if title == "" {
 		title = "No title"
 	}
-	editTicket := data.Ticket{ID: ticket.ID, ProjectId: ticket.ProjectId, Title: title,
-		Explanation: form.Explanation, Reporter: &form.Reporter, Worker: &form.Worker}
+	ticket.Title = title
+	ticket.Explanation = form.Explanation
+	ticket.Worker = &form.Worker
 	if form.Worker == 0 {
-		editTicket.Worker = nil
+		ticket.Worker = nil
 	}
-	data.UpdateTicket(editTicket)
+
+	ticketStatus, _ := data.TicketStatusByTicketId(ticket.ID)
+	data.UpdateTicket(ticket, ticketStatus.ID, form.StatusId)
+
 	return c.JSON(http.StatusOK, response.Ticket{Id: ticket.ID})
 }
 
 func GetTicketDetail(c echo.Context) error {
 	ticketId, err := strconv.Atoi(c.Param("ticket_id"))
-	if err != nil {
-		return response.CreateErrorResponse(err, c)
+	if utils.IsErr(err) {
+		return exception.FormBindException(c)
 	}
 	user := interceptor.User
 	ticket, err := data.TicketById(ticketId)
 	if utils.IsErr(err) {
-		return response.CreateErrorResponse(err, c)
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: "bad request ticket_id"})
 	}
 	if userProject := data.UserProjectByUserIdProjectId(user.ID, ticket.ProjectId); len(userProject) == 0 {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: constants.PermissionException})
+		return exception.PermissionException(c)
 	}
-	status, err := data.StatusByTicketId(ticketId)
-	if utils.IsErr(err) {
-		return response.CreateErrorResponse(err, c)
-	}
+	status := data.StatusByTicketId(ticketId)
 	responseStatus := response.IdName{Id: status.ID, Name: status.StatusName}
 
-	worker := data.User{}
+	worker := &data.User{}
 	if ticket.Worker != nil {
 		worker, _ = data.UserById(*ticket.Worker)
 	}
 	responseWorker := response.User{Id: worker.ID, Name: worker.Name}
 	if worker.Avatar != "" {
-		responseWorker.Avatar = "http://127.0.0.1:4572/taskmanage" + worker.Avatar
+		responseWorker.Avatar = constants.Params.S3EndPoint + constants.Params.S3BucketName + worker.Avatar
 	}
 	reporter, _ := data.UserById(*ticket.Reporter)
 	responseReporter := response.IdName{Id: reporter.ID, Name: reporter.Name}
@@ -198,18 +195,18 @@ func GetTicketDetail(c echo.Context) error {
 func DeleteTicket(c echo.Context) error {
 	fmt.Println(c.Param("ticket_id"))
 	ticketId, err := strconv.Atoi(c.Param("ticket_id"))
-	if err != nil {
-		return response.CreateErrorResponse(err, c)
+	if utils.IsErr(err) {
+		return exception.FormBindException(c)
 	}
 	user := interceptor.User
 	ticket, err := data.TicketById(ticketId)
 	if utils.IsErr(err) {
-		return response.CreateErrorResponse(err, c)
+		return exception.NotFoundData(c)
 	}
 	if userProject := data.UserProjectByUserIdProjectId(user.ID, ticket.ProjectId); len(userProject) == 0 {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: constants.PermissionException})
+		return exception.PermissionException(c)
 	}
 	data.DeleteTicket(ticketId)
 
-	return c.JSON(http.StatusOK, "ticket delete")
+	return c.JSON(http.StatusOK, constants.ProcessingComplete)
 }

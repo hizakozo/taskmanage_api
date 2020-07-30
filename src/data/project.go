@@ -1,5 +1,7 @@
 package data
 
+import "github.com/jinzhu/gorm"
+
 type Project struct {
 	ID            int    `gorm:"column:project_id;PRIMARY_KEY"`
 	ProjectName   string `gorm:"column:project_name"`
@@ -16,10 +18,13 @@ func ProjectsByUserId(userId int) []Project {
 	return projects
 }
 
-func ProjectById(projectId int) (Project, error) {
+func ProjectById(projectId int) (*Project, error) {
 	project := Project{ID: projectId}
 	err := Db.Find(&project).Error
-	return project, err
+	if gorm.IsRecordNotFoundError(err) {
+		return nil, err
+	}
+	return &project, err
 }
 
 func InsertProject(project Project) int {

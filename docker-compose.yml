@@ -1,7 +1,9 @@
 version: '3'
 services:
 #  app:
-#    build: .
+#    build:
+#      context: ./
+#      dockerfile: ./docker/app/Dockerfile
 #    tty: true # コンテナの起動永続化
 #    ports:
 #      - "1314:1313"
@@ -22,10 +24,7 @@ services:
       - DATA_DIR=/tmp/localstack/data
       - AWS_ACCESS_KEY_ID=tekitou
       - AWS_SECRET_ACCESS_KEY=tekitou
-      - AWS_S3_ENDPOINT=http://localstack:4572
     container_name: 'taskmanage-local-s3'
-    networks:
-      - app-net
     volumes:
       - ./docker/localstack/:/docker-entrypoint-initaws.d
 

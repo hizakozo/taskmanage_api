@@ -2,10 +2,12 @@ package handler
 
 import (
 	"github.com/labstack/echo"
+	"gopkg.in/go-playground/validator.v9"
 	"net/http"
 	"strconv"
 	"taskmanage_api/src/constants"
 	"taskmanage_api/src/data"
+	"taskmanage_api/src/exception"
 	"taskmanage_api/src/form"
 	"taskmanage_api/src/interceptor"
 	"taskmanage_api/src/response"
@@ -14,12 +16,13 @@ import (
 
 func GetStatusList(c echo.Context) error {
 	projectId, err := strconv.Atoi(c.Param("project_id"))
-	if err != nil {
-		return response.CreateErrorResponse(err, c)
+	if utils.IsErr(err) {
+		return exception.FormBindException(c)
 	}
+
 	user := interceptor.User
 	if userProject := data.UserProjectByUserIdProjectId(user.ID, projectId); len(userProject) == 0 {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: constants.PermissionException})
+		return exception.PermissionException(c)
 	}
 	var responseStatuses []response.Status
 	statuses := data.StatusByProjectId(projectId)
@@ -33,11 +36,12 @@ func GetStatusList(c echo.Context) error {
 func CreateStatus(c echo.Context) error {
 	user := interceptor.User
 	form := &form.CreateStatusForm{}
-	if err := c.Bind(form); err != nil {
-		return response.CreateErrorResponse(err, c)
+	_ = utils.BindForm(form, c)
+	if err := validator.New().Struct(form); err != nil {
+		return exception.InputFailed(c)
 	}
 	if userProject := data.UserProjectByUserIdProjectId(user.ID, form.ProjectId); len(userProject) == 0 {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: constants.PermissionException})
+		return exception.PermissionException(c)
 	}
 
 	progress := data.MaxProgressByProjectId(form.ProjectId)
@@ -54,15 +58,15 @@ func CreateStatus(c echo.Context) error {
 func UpdateStatus(c echo.Context) error {
 	user := interceptor.User
 	form := &form.UpdateStatusForm{}
-	if err := c.Bind(form); err != nil {
-		return response.CreateErrorResponse(err, c)
-	}
+	_ = utils.BindForm(form, c)
+
 	if userProject := data.UserProjectByUserIdProjectId(user.ID, form.ProjectId); len(userProject) == 0 {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: constants.PermissionException})
+		return exception.PermissionException(c)
 	}
+	//input statusがprojectと紐づいているか
 	targetStatus, err := data.StatusByIdProjectId(form.StatusId, form.ProjectId)
 	if utils.IsErr(err) {
-		return response.CreateErrorResponse(err, c)
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: "bad request status_id"})
 	}
 	var beforeProgress = targetStatus.Progress
 	var afterProgress = form.Progress
@@ -98,25 +102,25 @@ func UpdateStatus(c echo.Context) error {
 
 func DeleteStatus(c echo.Context) error {
 	statusId, err := strconv.Atoi(c.Param("status_id"))
-	if err != nil {
-		return response.CreateErrorResponse(err, c)
+	if utils.IsErr(err) {
+		return exception.FormBindException(c)
 	}
+
 	user := interceptor.User
 	trgStatus, err := data.StatusById(statusId)
 	if utils.IsErr(err) {
-		return response.CreateErrorResponse(err, c)
+		return exception.NotFoundData(c)
 	}
 	if userProject := data.UserProjectByUserIdProjectId(user.ID, trgStatus.ProjectId); len(userProject) == 0 {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: constants.PermissionException})
+		return exception.PermissionException(c)
 	}
 	if 0 < len(data.TicketByStatusId(statusId)) {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: "Ticket exists"})
 	}
 	findStatuses := data.StatusByProjectId(trgStatus.ProjectId)
-	if err := data.DeleteStatusTransaction(statusId, findStatuses, trgStatus.Progress); err != nil {
-		return response.CreateErrorResponse(err, c)
-	}
-	return c.JSON(http.StatusOK, response.SuccessResponse{Message: "delete status"})
+	data.DeleteStatusTransaction(statusId, findStatuses, trgStatus.Progress)
+
+	return c.JSON(http.StatusOK, response.SuccessResponse{Message: constants.ProcessingComplete})
 }
 
 func isOutOfProgressRange(statuses []data.Status, progress int) bool {

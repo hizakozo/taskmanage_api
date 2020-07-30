@@ -16,9 +16,8 @@ type ChangeStatusForm struct {
 
 type UpdateTicketForm struct {
 	TicketId    int    `json:"ticket_id"`
-	ProjectId   int    `json:"project_id"`
 	Title       string `json:"title"`
+	StatusId    int    `json:"status_id"`
 	Explanation string `json:"explanation"`
-	Reporter    int    `json:"reporter"`
 	Worker      int    `json:"worker"`
 }

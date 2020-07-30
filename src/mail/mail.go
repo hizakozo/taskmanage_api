@@ -3,13 +3,14 @@ package mail
 import (
 	"fmt"
 	"net/smtp"
+	"taskmanage_api/src/constants"
 )
 
 func SendMail(mailAddress string, message string) error {
 	auth := smtp.PlainAuth(
 		"",
-		"development.kendo.yasui@gmail.com", // foo@gmail.com
-		"lzuooffyabdctfbq",
+		constants.Params.MailUserName,
+		constants.Params.MailPassword,
 		"smtp.gmail.com",
 	)
 

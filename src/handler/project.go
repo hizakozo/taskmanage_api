@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"taskmanage_api/src/constants"
 	"taskmanage_api/src/data"
+	"taskmanage_api/src/exception"
 	"taskmanage_api/src/form"
 	"taskmanage_api/src/interceptor"
 	"taskmanage_api/src/mail"
@@ -32,9 +33,7 @@ func GetProjectList(c echo.Context) error {
 func CreateProject(c echo.Context) error {
 	user := interceptor.User
 	form := &form.CreateProjectForm{}
-	if err := c.Bind(form); err != nil {
-		return err
-	}
+	_ = utils.BindForm(form, c)
 
 	var project data.Project
 	project.ProjectName = form.ProjectName
@@ -55,89 +54,75 @@ func CreateProject(c echo.Context) error {
 		data.InsertStatus(status)
 	}
 
-	return c.JSON(http.StatusOK, "create project")
+	return c.JSON(http.StatusOK, response.SuccessResponse{Message: constants.ProcessingComplete})
 }
 
 func UpdateProject(c echo.Context) error {
 	user := interceptor.User
 	form := &form.UpdateProjectForm{}
-	if err := c.Bind(form); err != nil {
-		return err
-	}
+	_ = utils.BindForm(form, c)
 
 	if userProject := data.UserProjectByUserIdProjectId(user.ID, form.ProjectId); len(userProject) == 0 {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: constants.PermissionException})
+		return exception.PermissionException(c)
 	}
 
 	project := data.Project{ID: form.ProjectId, ProjectName: form.ProjectName,
 		Description: form.Description, ProjectAvatar: form.ProjectAvatar}
 	data.UpdateProject(project)
 
-	return c.JSON(http.StatusOK, "project update")
+	return c.JSON(http.StatusOK, constants.ProcessingComplete)
 }
 
 func DeleteProject(c echo.Context) error {
 	projectId, err := strconv.Atoi(c.Param("project_id"))
-	if err != nil {
-		return response.CreateErrorResponse(err, c)
+	if utils.IsErr(err) {
+		return exception.FormBindException(c)
 	}
 	user := interceptor.User
 	if userProject := data.UserProjectByUserIdProjectId(user.ID, projectId); len(userProject) == 0 {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: constants.PermissionException})
+		return exception.PermissionException(c)
 	}
 	data.DeleteProject(projectId)
 
-	return c.JSON(http.StatusOK, "ticket delete")
+	return c.JSON(http.StatusOK, constants.ProcessingComplete)
 }
 
 func InviteProject(c echo.Context) error {
 	user := interceptor.User
 	form := &form.InviteProjectForm{}
-	if err := c.Bind(form); err != nil {
-		return response.CreateErrorResponse(err, c)
-	}
+	_ = utils.BindForm(form, c)
 
 	if userProject := data.UserProjectByUserIdProjectId(user.ID, form.ProjectId); len(userProject) == 0 {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: constants.PermissionException})
+		return exception.PermissionException(c)
 	}
 	auth, err := data.AuthByMailAddress(form.MailAddress)
 	if utils.IsErr(err) {
-		return response.CreateErrorResponse(err, c)
+		return exception.NotFoundData(c)
 	}
 	if userProject := data.UserProjectByUserIdProjectId(auth.ID, form.ProjectId); len(userProject) > 0 {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: "already exists user_project"})
+		return exception.DataAlreadyExists(c, "user_project")
 	}
 	inviteInfo := model.InviteInfo{ProjectId: form.ProjectId, UserId: auth.UserId}
-	inviteInfoJson, err := json.Marshal(inviteInfo)
-	if err != nil {
-		return response.CreateErrorResponse(err, c)
-	}
+	inviteInfoJson, _ := json.Marshal(inviteInfo)
 	token, _ := utils.MakeRandomStr()
 	data.RedisSet(string(inviteInfoJson), token)
 	message :=
-		"プロジェクトの招待を受け取りました。" + "\n" +
-			"以下のURLをクリックしてください。" + "\n" +
+		constants.MailBody +
 			constants.Params.FrontUrl + "join/" + token
-	if err := mail.SendMail(auth.MailAddress, message); err != nil {
-		return response.CreateErrorResponse(err, c)
-	}
-	return c.JSON(http.StatusOK, response.SuccessResponse{Message: "send mail to" + auth.MailAddress})
+	_ = mail.SendMail(auth.MailAddress, message)
+	return c.JSON(http.StatusOK, response.SuccessResponse{Message: constants.ProcessingComplete})
 }
 
 func JoinProject(c echo.Context) error {
 	form := &form.JoinProjectForm{}
-	if err := c.Bind(form); err != nil {
-		return response.CreateErrorResponse(err, c)
-	}
+	_ = utils.BindForm(form, c)
 	inviteInfoJson, _ := data.RedisGetInviteInfo(form.Token)
 
 	var inviteInfo = new(model.InviteInfo)
-	if err := json.Unmarshal([]byte(inviteInfoJson), inviteInfo); err != nil {
-		return response.CreateErrorResponse(err, c)
-	}
+	_ = json.Unmarshal([]byte(inviteInfoJson), inviteInfo)
 
 	if userProject := data.UserProjectByUserIdProjectId(inviteInfo.UserId, inviteInfo.ProjectId); len(userProject) > 0 {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse{Message: "already exists user_project"})
+		return exception.DataAlreadyExists(c, "user_project")
 	}
 
 	data.InsertUserProject(data.UserProject{UserId: inviteInfo.UserId, ProjectId: inviteInfo.ProjectId})

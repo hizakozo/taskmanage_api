@@ -1,8 +1,8 @@
 package form
 
 type CreateStatusForm struct {
-	ProjectId  int    `json:"project_id"`
-	StatusName string `json:"status_name"`
+	ProjectId  int    `json:"project_id"  validate:"required"`
+	StatusName string `json:"status_name"  validate:"required"`
 }
 
 type UpdateStatusForm struct {

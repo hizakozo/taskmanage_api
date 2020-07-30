@@ -13,7 +13,7 @@ type Status struct {
 	Id       int      `json:"id"`
 	Progress int      `json:"progress"`
 	Name     string   `json:"name"`
-	Tickets  []Ticket `json:"tickets,omitempty"`
+	Tickets  []Ticket `json:"tickets"`
 }
 
 type Ticket struct {

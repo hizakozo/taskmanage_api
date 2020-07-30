@@ -24,18 +24,24 @@ func InsertTicket(ticket Ticket) int {
 
 func TicketByProjectIdStatusId(projectId int, statusId int) []Ticket {
 	var tickets []Ticket
-	Db.Table("ticket").Select("ticket.ticket_id, project_id, title, explanation, reporter, worker").
-		Joins("join ticket_status on ticket.ticket_id = ticket_status.ticket_id").
-		Where("ticket.project_id = ? AND ticket_status.status_id = ?", projectId, statusId).
+	Db.Table("ticket t").Select("t.ticket_id, project_id, title, explanation, reporter, worker").
+		Joins("join ticket_status ts on t.ticket_id = ts.ticket_id").
+		Where("t.project_id = ? AND ts.status_id = ?", projectId, statusId).
+		Order("t.update_at desc").
 		Scan(&tickets)
 	return tickets
 }
 
-func TicketById(ticketId int) (Ticket, error) {
-	ticket := Ticket{ID: ticketId}
+func TicketById(ticketId int) (*Ticket, error) {
+	ticket := Ticket{}
 	err := Db.Select("ticket_id, project_id, title, explanation, reporter, worker").
+		Table("ticket").
+		Where("ticket_id = ?", ticketId).
 		Find(&ticket).Error
-	return ticket, err
+	if gorm.IsRecordNotFoundError(err) {
+		return nil, err
+	}
+	return &ticket, err
 }
 
 func TicketByProjectIdWorker(projectId int, worker int) []Ticket {
@@ -47,8 +53,16 @@ func TicketByProjectIdWorker(projectId int, worker int) []Ticket {
 	return tickets
 }
 
-func UpdateTicket(ticket Ticket) {
-	Db.Save(&ticket)
+func UpdateTicket(ticket *Ticket, ticketStatusId int, statusId int) {
+	tx := Db.Begin()
+	if err := tx.Save(&ticket).Error; err != nil {
+		tx.Rollback()
+	}
+	ticketStatus := TicketStatus{ID: ticketStatusId}
+	if err := tx.Model(&ticketStatus).Update("status_id", statusId).Error; err != nil {
+		tx.Rollback()
+	}
+	tx.Commit()
 }
 
 func TicketImgById(ticketId int) []TicketImg {

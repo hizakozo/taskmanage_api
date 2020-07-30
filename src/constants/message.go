@@ -1,6 +1,8 @@
 package constants
 
 const (
-	PermissionException = "Permission Exception"
-	TokenFailed         = "Token authentication failed"
+	ProcessingComplete = "Processing complete"
+
+	MailBody = "プロジェクトの招待を受け取りました。" + "\n" +
+		"以下のURLをクリックしてください。" + "\n"
 )

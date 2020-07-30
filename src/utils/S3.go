@@ -7,22 +7,21 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"mime/multipart"
+	"taskmanage_api/src/constants"
 )
 
-const S3Endpoint = "http://localhost:4572"
-
-func S3PutObject(bucketName, key string, file multipart.File) (*s3.PutObjectOutput, error) {
+func S3PutObject(key string, file multipart.File) (*s3.PutObjectOutput, error) {
 	s := session.Must(session.NewSession(&aws.Config{
-		Credentials:      credentials.NewStaticCredentials("tekitou", "tekitou", ""),
+		Credentials:      credentials.NewStaticCredentials(constants.Params.S3Key, constants.Params.S3SecretKey, ""),
 		S3ForcePathStyle: aws.Bool(true),
 		Region:           aws.String(endpoints.ApNortheast1RegionID),
-		Endpoint:         aws.String(S3Endpoint),
+		Endpoint:         aws.String(constants.Params.S3EndPoint),
 	}))
 
 	c := s3.New(s, &aws.Config{})
 
 	p := s3.PutObjectInput{
-		Bucket: aws.String(bucketName),
+		Bucket: aws.String(constants.Params.S3BucketName),
 		Key:    aws.String(key),
 		ACL:    aws.String("public-read"),
 		Body:   file,

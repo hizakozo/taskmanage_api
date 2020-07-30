@@ -1,5 +1,7 @@
 package data
 
+import "github.com/jinzhu/gorm"
+
 type TicketStatus struct {
 	ID       int `gorm:"column:ticket_status_id;PRIMARY_KEY"`
 	TicketId int `gorm:"column:ticket_id"`
@@ -16,8 +18,11 @@ func UpdateTicketStatus(ticketStatusId int, statusId int) {
 		Update("status_id", statusId)
 }
 
-func TicketStatusByTicketId(ticketId int) (TicketStatus, error) {
+func TicketStatusByTicketId(ticketId int) (*TicketStatus, error) {
 	ticketStatus := TicketStatus{}
 	err := Db.Where("ticket_id = ?", ticketId).Find(&ticketStatus).Error
-	return ticketStatus, err
+	if gorm.IsRecordNotFoundError(err) {
+		return nil, err
+	}
+	return &ticketStatus, err
 }

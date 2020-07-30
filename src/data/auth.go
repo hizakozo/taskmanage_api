@@ -26,13 +26,16 @@ func AuthByLoginId(loginId string) (*Auth, error) {
 	return &auth, err
 }
 
-func AuthByUserId(userId int) (Auth, error) {
+func AuthByUserId(userId int) (*Auth, error) {
 	auth := Auth{}
 	err := Db.Select("auth_id, user_id, login_id, password, mail_address").
 		Table("auth").
 		Where("user_id = ?", userId).
 		Find(&auth).Error
-	return auth, err
+	if gorm.IsRecordNotFoundError(err) {
+		return nil, err
+	}
+	return &auth, err
 }
 
 func AuthByMailAddress(mailAddress string) (*Auth, error) {
