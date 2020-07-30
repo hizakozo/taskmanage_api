@@ -18,22 +18,22 @@ func main() {
 	e.GET("/user/profile", handler.GetUserProfile, interceptor.CsrfAuth)
 
 	e.GET("/projects", handler.GetProjectList, interceptor.CsrfAuth)
-	e.POST("/projects", handler.CreateProject, interceptor.CsrfAuth)
-	e.PUT("/projects", handler.UpdateProject, interceptor.CsrfAuth)
+	e.POST("/projects/create", handler.CreateProject, interceptor.CsrfAuth)
+	e.PUT("/projects/update", handler.UpdateProject, interceptor.CsrfAuth)
 	e.DELETE("/projects/:project_id", handler.DeleteProject, interceptor.CsrfAuth)
 	e.POST("/projects/invite", handler.InviteProject, interceptor.CsrfAuth)
 	e.POST("/projects/join", handler.JoinProject)
 
-	e.POST("/tickets", handler.CreateTicket, interceptor.CsrfAuth)
+	e.POST("/tickets/create", handler.CreateTicket, interceptor.CsrfAuth)
 	e.GET("/tickets/:project_id", handler.GetTicketList, interceptor.CsrfAuth)
-	e.PUT("/tickets", handler.UpdateTicket, interceptor.CsrfAuth)
+	e.PUT("/tickets/update", handler.UpdateTicket, interceptor.CsrfAuth)
 	e.PUT("/tickets/status", handler.ChangeStatus, interceptor.CsrfAuth)
 	e.GET("/tickets/detail/:ticket_id", handler.GetTicketDetail, interceptor.CsrfAuth)
 	e.DELETE("/tickets/delete/:ticket_id", handler.DeleteTicket, interceptor.CsrfAuth)
 
 	e.GET("/statuses/:project_id", handler.GetStatusList, interceptor.CsrfAuth)
-	e.POST("/statuses", handler.CreateStatus, interceptor.CsrfAuth)
-	e.PUT("/statuses", handler.UpdateStatus, interceptor.CsrfAuth)
+	e.POST("/statuses/create", handler.CreateStatus, interceptor.CsrfAuth)
+	e.PUT("/statuses/update", handler.UpdateStatus, interceptor.CsrfAuth)
 	e.DELETE("/statuses/delete/:status_id", handler.DeleteStatus, interceptor.CsrfAuth)
 
 	e.GET("/comments/:ticket_id", handler.GetComment, interceptor.CsrfAuth)

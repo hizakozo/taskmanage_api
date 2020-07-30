@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"github.com/labstack/echo"
+	"gopkg.in/go-playground/validator.v9"
 	"net/http"
 	"strconv"
 	"taskmanage_api/src/constants"
@@ -34,7 +35,9 @@ func CreateProject(c echo.Context) error {
 	user := interceptor.User
 	form := &form.CreateProjectForm{}
 	_ = utils.BindForm(form, c)
-
+	if err := validator.New().Struct(form); err != nil {
+		return exception.InputFailed(c)
+	}
 	var project data.Project
 	project.ProjectName = form.ProjectName
 	project.Description = form.Description
@@ -61,7 +64,9 @@ func UpdateProject(c echo.Context) error {
 	user := interceptor.User
 	form := &form.UpdateProjectForm{}
 	_ = utils.BindForm(form, c)
-
+	if err := validator.New().Struct(form); err != nil {
+		return exception.InputFailed(c)
+	}
 	if userProject := data.UserProjectByUserIdProjectId(user.ID, form.ProjectId); len(userProject) == 0 {
 		return exception.PermissionException(c)
 	}

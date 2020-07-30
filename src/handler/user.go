@@ -61,11 +61,14 @@ func SignIn(c echo.Context) error {
 		return exception.InputFailed(c)
 	}
 	auth, err := data.AuthByLoginId(form.LoginId)
+	err = utils.PasswordVerify(auth.Password, form.Password)
 	if utils.IsErr(err) {
 		return exception.NotFoundData(c)
 	}
-	err = utils.PasswordVerify(auth.Password, form.Password)
 	user, err := data.UserById(auth.UserId)
+	if utils.IsErr(err) {
+		return exception.NotFoundData(c)
+	}
 	var userToken, _ = utils.MakeRandomStr()
 	userJson, _ := json.Marshal(user)
 	data.RedisSet(string(userJson), userToken)
