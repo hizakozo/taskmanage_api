@@ -9,3 +9,8 @@
 
 ### フロントエンド（Vue.js）
 https://github.com/hizakozo/taskmanage_front
+
+### docker start
+`docker-compose up -d`
+### app start
+`GO_ENV=local go run main.go`
