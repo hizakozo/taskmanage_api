@@ -72,7 +72,7 @@ type ProjectList struct {
 type User struct {
 	Id          int    `json:"id"`
 	Name        string `json:"name"`
-	Avatar      string `json:"avatar"`
+	Avatar      string `json:"avatar,omitempty"`
 	MailAddress string `json:"mail_address,omitempty"`
 }
 

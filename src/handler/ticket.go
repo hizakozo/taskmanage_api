@@ -18,7 +18,9 @@ func CreateTicket(c echo.Context) error {
 	user := interceptor.User
 
 	form := &form.CreateTicketForm{}
-	_ = utils.BindForm(form, c)
+	if err := c.Bind(&form); err != nil {
+		return exception.FormBindException(c)
+	}
 
 	title := form.Title
 	if title == "" {
@@ -74,7 +76,7 @@ func GetTicketList(c echo.Context) error {
 			responseTicket.Title = ticket.Title
 			if ticket.Worker != nil {
 				worker, _ := data.UserById(*ticket.Worker)
-				responseTicket.Avatar = constants.Params.S3EndPoint + constants.Params.S3BucketName + worker.Avatar
+				responseTicket.Avatar = constants.Params.S3Url + worker.Avatar
 			}
 			responseTickets = append(responseTickets, responseTicket)
 		}
@@ -89,7 +91,9 @@ func GetTicketList(c echo.Context) error {
 func ChangeStatus(c echo.Context) error {
 	user := interceptor.User
 	form := &form.ChangeStatusForm{}
-	_ = utils.BindForm(form, c)
+	if err := c.Bind(&form); err != nil {
+		return exception.FormBindException(c)
+	}
 
 	if userProject := data.UserProjectByUserIdProjectId(user.ID, form.ProjectId); len(userProject) == 0 {
 		return exception.PermissionException(c)
@@ -116,7 +120,9 @@ func ChangeStatus(c echo.Context) error {
 func UpdateTicket(c echo.Context) error {
 	user := interceptor.User
 	form := &form.UpdateTicketForm{}
-	_ = utils.BindForm(form, c)
+	if err := c.Bind(&form); err != nil {
+		return exception.FormBindException(c)
+	}
 	//ticketが存在するか
 	ticket, err := data.TicketById(form.TicketId)
 	if utils.IsErr(err) {

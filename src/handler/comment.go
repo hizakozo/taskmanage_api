@@ -37,7 +37,9 @@ func GetComment(c echo.Context) error {
 
 func CreateComment(c echo.Context) error {
 	form := &form.CreateCommentForm{}
-	_ = utils.BindForm(form, c)
+	if err := c.Bind(&form); err != nil {
+		return exception.FormBindException(c)
+	}
 	user := interceptor.User
 	err := data.TicketByIdUserId(form.TicketId, user.ID)
 	if utils.IsErr(err) {

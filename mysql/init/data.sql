@@ -181,7 +181,7 @@ insert into user_project(user_id, project_id) values
 ((select max(user_id) from user), (select project_id from project where project_name = 'test_project1')),
 ((select max(user_id) from user), (select project_id from project where project_name = 'test_project2'));
 
-insert into user (user_name, avatar) values ('reporter', '/user/02.jpg');
+insert into user (user_name, avatar) values ('reporter', 'user/02.jpg');
 insert into auth (user_id, login_id, password, mail_address) values
 ((select max(user_id) from user), 'reporter', '2cb22086791fca9cc06c2239fd74f2f9', 'reporter@reporter.com');
 
@@ -211,7 +211,7 @@ insert into ticket_status (ticket_id, status_id) values
 ((select ticket_id from ticket where title = 'testTitle5'), (select status_id from status where status_name = '着手')),
 ((select ticket_id from ticket where title = 'testTitle6'), (select status_id from status where status_name = '完了'));
 
-insert into user (user_name, avatar) values ('yasui', '/user/01.jpg');
+insert into user (user_name, avatar) values ('yasui', 'user/01.jpg');
 insert into auth (user_id, login_id, password, mail_address) values
 ((select max(user_id) from user), 'yasui', '$2a$10$.r0EzJ4ahKKDl2fe9/UwkOZxMI2jXlmdtUWCdtOv7q4XkSrYJEMcy', 'sample@gmail.com');
 

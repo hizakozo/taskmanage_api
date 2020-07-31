@@ -2,10 +2,8 @@ package utils
 
 import (
 	"errors"
-	"github.com/labstack/echo"
 	"golang.org/x/crypto/bcrypt"
 	"math/rand"
-	"taskmanage_api/src/exception"
 )
 
 func MakeRandomStr() (string, error) {
@@ -42,11 +40,4 @@ func PasswordVerify(hash, pw string) error {
 
 func IsErr(err error) bool {
 	return err != nil
-}
-
-func BindForm(form interface{}, c echo.Context) error {
-	if err := c.Bind(&form); err != nil {
-		return exception.FormBindException(c)
-	}
-	return nil
 }

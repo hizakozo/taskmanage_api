@@ -7,14 +7,15 @@ import (
 )
 
 type EnvParam struct {
-	DbUrl     string
-	DbUser    string
-	DbPass    string
-	RedisAddr string
-	FrontUrl  string
-	S3EndPoint string
-	S3Key string
-	S3SecretKey string
+	DbUrl        string
+	DbUser       string
+	DbPass       string
+	RedisAddr    string
+	FrontUrl     string
+	S3EndPoint   string
+	S3Url        string
+	S3Key        string
+	S3SecretKey  string
 	S3BucketName string
 	MailUserName string
 	MailPassword string
@@ -31,6 +32,7 @@ func init() {
 	Params.RedisAddr = os.Getenv("REDIS_ADDR")
 	Params.FrontUrl = os.Getenv("FRONT_URL")
 	Params.S3EndPoint = os.Getenv("S3_ENDPOINT")
+	Params.S3Url = os.Getenv("S3_URL")
 	Params.S3Key = os.Getenv("S3_KEY")
 	Params.S3SecretKey = os.Getenv("S3_SECRET_KEY")
 	Params.S3BucketName = os.Getenv("S3_BUCKET_NAME")

@@ -36,7 +36,9 @@ func GetStatusList(c echo.Context) error {
 func CreateStatus(c echo.Context) error {
 	user := interceptor.User
 	form := &form.CreateStatusForm{}
-	_ = utils.BindForm(form, c)
+	if err := c.Bind(&form); err != nil {
+		return exception.FormBindException(c)
+	}
 	if err := validator.New().Struct(form); err != nil {
 		return exception.InputFailed(c)
 	}
@@ -58,7 +60,9 @@ func CreateStatus(c echo.Context) error {
 func UpdateStatus(c echo.Context) error {
 	user := interceptor.User
 	form := &form.UpdateStatusForm{}
-	_ = utils.BindForm(form, c)
+	if err := c.Bind(&form); err != nil {
+		return exception.FormBindException(c)
+	}
 
 	if userProject := data.UserProjectByUserIdProjectId(user.ID, form.ProjectId); len(userProject) == 0 {
 		return exception.PermissionException(c)

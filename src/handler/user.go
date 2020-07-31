@@ -4,23 +4,26 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/labstack/echo"
+	"github.com/labstack/gommon/log"
 	"gopkg.in/go-playground/validator.v9"
 	"net/http"
 	"strconv"
 	"taskmanage_api/src/constants"
 	"taskmanage_api/src/data"
+	"taskmanage_api/src/exception"
 	"taskmanage_api/src/form"
 	"taskmanage_api/src/interceptor"
 	"taskmanage_api/src/response"
 	"taskmanage_api/src/utils"
-	"taskmanage_api/src/exception"
 )
 
 func SignUp(c echo.Context) error {
-	fmt.Println(234)
-	form := &form.SignUpForm{}
-	_ = utils.BindForm(form, c)
+	form := form.SignUpForm{}
+	if err := c.Bind(&form); err != nil {
+		return exception.FormBindException(c)
+	}
 	if err := validator.New().Struct(form); err != nil {
+		log.Error(err)
 		return exception.InputFailed(c)
 	}
 	name := c.FormValue("name")
@@ -36,11 +39,12 @@ func SignUp(c echo.Context) error {
 	}
 	user := data.User{Name: name}
 	if avatar != nil {
-		fileName := "/user/" + avatar.Filename
+		fileName := "user/" + avatar.Filename
 		src, err := avatar.Open()
 		defer src.Close()
 		_, err = utils.S3PutObject(fileName, src)
 		if err != nil {
+			log.Error(err)
 			return exception.FileUploadFailed(c)
 		}
 		user.Avatar = fileName
@@ -56,11 +60,14 @@ func SignUp(c echo.Context) error {
 
 func SignIn(c echo.Context) error {
 	form := &form.LoginForm{}
-	_ = utils.BindForm(form, c)
+	if err := c.Bind(&form); err != nil {
+		return exception.FormBindException(c)
+	}
 	if err := validator.New().Struct(form); err != nil {
 		return exception.InputFailed(c)
 	}
 	auth, err := data.AuthByLoginId(form.LoginId)
+	fmt.Print(form)
 	err = utils.PasswordVerify(auth.Password, form.Password)
 	if utils.IsErr(err) {
 		return exception.NotFoundData(c)
@@ -102,7 +109,9 @@ func SignOut(c echo.Context) error {
 	token := c.Request().Header.Get("user_token")
 	user, _ := data.RedisGet(token)
 	form := &form.LogOutForm{}
-	_ = utils.BindForm(form, c)
+	if err := c.Bind(&form); err != nil {
+		return exception.FormBindException(c)
+	}
 	if user.ID != form.UserId {
 		return exception.PermissionException(c)
 	}

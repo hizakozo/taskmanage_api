@@ -34,7 +34,9 @@ func GetProjectList(c echo.Context) error {
 func CreateProject(c echo.Context) error {
 	user := interceptor.User
 	form := &form.CreateProjectForm{}
-	_ = utils.BindForm(form, c)
+	if err := c.Bind(&form); err != nil {
+		return exception.FormBindException(c)
+	}
 	if err := validator.New().Struct(form); err != nil {
 		return exception.InputFailed(c)
 	}
@@ -63,7 +65,9 @@ func CreateProject(c echo.Context) error {
 func UpdateProject(c echo.Context) error {
 	user := interceptor.User
 	form := &form.UpdateProjectForm{}
-	_ = utils.BindForm(form, c)
+	if err := c.Bind(&form); err != nil {
+		return exception.FormBindException(c)
+	}
 	if err := validator.New().Struct(form); err != nil {
 		return exception.InputFailed(c)
 	}
@@ -95,7 +99,9 @@ func DeleteProject(c echo.Context) error {
 func InviteProject(c echo.Context) error {
 	user := interceptor.User
 	form := &form.InviteProjectForm{}
-	_ = utils.BindForm(form, c)
+	if err := c.Bind(&form); err != nil {
+		return exception.FormBindException(c)
+	}
 
 	if userProject := data.UserProjectByUserIdProjectId(user.ID, form.ProjectId); len(userProject) == 0 {
 		return exception.PermissionException(c)
@@ -120,7 +126,9 @@ func InviteProject(c echo.Context) error {
 
 func JoinProject(c echo.Context) error {
 	form := &form.JoinProjectForm{}
-	_ = utils.BindForm(form, c)
+	if err := c.Bind(&form); err != nil {
+		return exception.FormBindException(c)
+	}
 	inviteInfoJson, _ := data.RedisGetInviteInfo(form.Token)
 
 	var inviteInfo = new(model.InviteInfo)
