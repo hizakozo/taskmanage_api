@@ -97,7 +97,7 @@ func GetUsersInProject(c echo.Context) error {
 	for _, user := range users {
 		responseUser := response.User{Id: user.ID, Name: user.Name}
 		if user.Avatar != "" {
-			responseUser.Avatar = constants.Params.S3EndPoint + constants.Params.S3BucketName + user.Avatar
+			responseUser.Avatar = constants.Params.S3Url + user.Avatar
 		}
 		responseUsers = append(responseUsers, responseUser)
 	}
