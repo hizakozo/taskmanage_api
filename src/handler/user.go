@@ -44,7 +44,7 @@ func SignUp(c echo.Context) error {
 		defer src.Close()
 		_, err = utils.S3PutObject(fileName, src)
 		if err != nil {
-			log.Error(err)
+			fmt.Print(err)
 			return exception.FileUploadFailed(c)
 		}
 		user.Avatar = fileName

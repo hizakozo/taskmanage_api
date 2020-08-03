@@ -166,55 +166,55 @@ insert into auth (user_id, login_id, password, mail_address) values
 ((select max(user_id) from user), 'test', '$2a$10$.QOu/aJH9U45RbfQyaySOeVScRmDJixLwtf1xiuBzwmZvpGX2W6qO', 'reporter@reporter.com');
 
 insert into project(project_name, description, project_avatar) values
-('test_project1', 'testのpuroject1だよ', 'http://test1'),
-('test_project2', 'testのpuroject2だよ', 'http://test2');
+('project1', 'タスク管理アプリケーションAPI', 'http://test1'),
+('project2', 'タスク管理アプリケーションFrontEnd', 'http://test2');
 
 insert into status (project_id, progress, status_name) values
-((select project_id from project where project_name = 'test_project1'), 1, 'TODO'),
-((select project_id from project where project_name = 'test_project1'), 2, 'GOING'),
-((select project_id from project where project_name = 'test_project1'), 3, 'DONE'),
-((select project_id from project where project_name = 'test_project2'), 1, '未着手'),
-((select project_id from project where project_name = 'test_project2'), 2, '着手'),
-((select project_id from project where project_name = 'test_project2'), 3, '完了');
+((select project_id from project where project_name = 'project1'), 1, 'TODO'),
+((select project_id from project where project_name = 'project1'), 2, 'GOING'),
+((select project_id from project where project_name = 'project1'), 3, 'DONE'),
+((select project_id from project where project_name = 'project2'), 1, '未着手'),
+((select project_id from project where project_name = 'project2'), 2, '着手'),
+((select project_id from project where project_name = 'project2'), 3, '完了');
 
 insert into user_project(user_id, project_id) values
-((select max(user_id) from user), (select project_id from project where project_name = 'test_project1')),
-((select max(user_id) from user), (select project_id from project where project_name = 'test_project2'));
+((select max(user_id) from user), (select project_id from project where project_name = 'project1')),
+((select max(user_id) from user), (select project_id from project where project_name = 'project2'));
 
 insert into user (user_name, avatar) values ('reporter', 'user/02.jpg');
 insert into auth (user_id, login_id, password, mail_address) values
 ((select max(user_id) from user), 'reporter', '2cb22086791fca9cc06c2239fd74f2f9', 'reporter@reporter.com');
 
 insert into user_project(user_id, project_id) values
-((select max(user_id) from user), (select project_id from project where project_name = 'test_project1')),
-((select max(user_id) from user), (select project_id from project where project_name = 'test_project2'));
+((select max(user_id) from user), (select project_id from project where project_name = 'project1')),
+((select max(user_id) from user), (select project_id from project where project_name = 'project2'));
 
-insert into user (user_name, avatar) values ('worker', '/user/03.jpg');
+insert into user (user_name, avatar) values ('worker', 'user/03.jpg');
 insert into auth (user_id, login_id, password, mail_address) values
 ((select max(user_id) from user), 'worker', 'c8d97880379aa8ba1efeacbcced85c0e', 'reporter@reporter.com');
 insert into user_project(user_id, project_id) values
-((select max(user_id) from user), (select project_id from project where project_name = 'test_project1')),
-((select max(user_id) from user), (select project_id from project where project_name = 'test_project2'));
+((select max(user_id) from user), (select project_id from project where project_name = 'project1')),
+((select max(user_id) from user), (select project_id from project where project_name = 'project2'));
 insert into ticket (project_id, title, explanation, reporter, worker) values
-((select project_id from project where project_name = 'test_project1'), 'testTitle1', 'testBody1', (select user_id from user where user_name = 'reporter'), (select user_id from user where user_name = 'worker')),
-((select project_id from project where project_name = 'test_project1'), 'testTitle2', 'testBody2', (select user_id from user where user_name = 'reporter'), (select user_id from user where user_name = 'worker')),
-((select project_id from project where project_name = 'test_project1'), 'testTitle3', 'testBody3', (select user_id from user where user_name = 'reporter'), (select user_id from user where user_name = 'worker')),
-((select project_id from project where project_name = 'test_project2'), 'testTitle4', 'testBody4', (select user_id from user where user_name = 'reporter'), (select user_id from user where user_name = 'worker')),
-((select project_id from project where project_name = 'test_project2'), 'testTitle5', 'testBody5', (select user_id from user where user_name = 'reporter'), (select user_id from user where user_name = 'worker')),
-((select project_id from project where project_name = 'test_project2'), 'testTitle6', 'testBody6', (select user_id from user where user_name = 'reporter'), (select user_id from user where user_name = 'worker'));
+((select project_id from project where project_name = 'project1'), 'bug修正', 'testBody1', (select user_id from user where user_name = 'reporter'), (select user_id from user where user_name = 'worker')),
+((select project_id from project where project_name = 'project1'), 'storage URL変更', 'testBody2', (select user_id from user where user_name = 'reporter'), (select user_id from user where user_name = 'worker')),
+((select project_id from project where project_name = 'project1'), 'log機能実装', 'testBody3', (select user_id from user where user_name = 'reporter'), (select user_id from user where user_name = 'worker')),
+((select project_id from project where project_name = 'project2'), 'header改修', 'testBody4', (select user_id from user where user_name = 'reporter'), (select user_id from user where user_name = 'worker')),
+((select project_id from project where project_name = 'project2'), '環境変数導入', 'testBody5', (select user_id from user where user_name = 'reporter'), (select user_id from user where user_name = 'worker')),
+((select project_id from project where project_name = 'project2'), 'プロジェクト一覧page改修', 'testBody6', (select user_id from user where user_name = 'reporter'), (select user_id from user where user_name = 'worker'));
 
 insert into ticket_status (ticket_id, status_id) values
-((select ticket_id from ticket where title = 'testTitle1'), (select status_id from status where status_name = 'TODO')),
-((select ticket_id from ticket where title = 'testTitle2'), (select status_id from status where status_name = 'GOING')),
-((select ticket_id from ticket where title = 'testTitle3'), (select status_id from status where status_name = 'DONE')),
-((select ticket_id from ticket where title = 'testTitle4'), (select status_id from status where status_name = '未着手')),
-((select ticket_id from ticket where title = 'testTitle5'), (select status_id from status where status_name = '着手')),
-((select ticket_id from ticket where title = 'testTitle6'), (select status_id from status where status_name = '完了'));
+((select ticket_id from ticket where title = 'bug修正'), (select status_id from status where status_name = 'TODO')),
+((select ticket_id from ticket where title = 'storage URL変更'), (select status_id from status where status_name = 'GOING')),
+((select ticket_id from ticket where title = 'log機能実装'), (select status_id from status where status_name = 'DONE')),
+((select ticket_id from ticket where title = 'header改修'), (select status_id from status where status_name = '未着手')),
+((select ticket_id from ticket where title = '環境変数導入'), (select status_id from status where status_name = '着手')),
+((select ticket_id from ticket where title = 'プロジェクト一覧page改修'), (select status_id from status where status_name = '完了'));
 
 insert into user (user_name, avatar) values ('yasui', 'user/01.jpg');
 insert into auth (user_id, login_id, password, mail_address) values
 ((select max(user_id) from user), 'yasui', '$2a$10$.r0EzJ4ahKKDl2fe9/UwkOZxMI2jXlmdtUWCdtOv7q4XkSrYJEMcy', 'sample@gmail.com');
 
 insert into user_project(user_id, project_id) values
-((select max(user_id) from user), (select project_id from project where project_name = 'test_project1')),
-((select max(user_id) from user), (select project_id from project where project_name = 'test_project2'));
+((select max(user_id) from user), (select project_id from project where project_name = 'project1')),
+((select max(user_id) from user), (select project_id from project where project_name = 'project2'));

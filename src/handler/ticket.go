@@ -179,7 +179,7 @@ func GetTicketDetail(c echo.Context) error {
 	}
 	responseWorker := response.User{Id: worker.ID, Name: worker.Name}
 	if worker.Avatar != "" {
-		responseWorker.Avatar = constants.Params.S3EndPoint + constants.Params.S3BucketName + worker.Avatar
+		responseWorker.Avatar = constants.Params.S3Url + worker.Avatar
 	}
 	reporter, _ := data.UserById(*ticket.Reporter)
 	responseReporter := response.IdName{Id: reporter.ID, Name: reporter.Name}
