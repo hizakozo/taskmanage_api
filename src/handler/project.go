@@ -119,7 +119,7 @@ func InviteProject(c echo.Context) error {
 	data.RedisSet(string(inviteInfoJson), token)
 	message :=
 		constants.MailBody +
-			constants.Params.FrontUrl + "join/" + token
+			constants.Params.FrontUrl + "#/join/" + token
 	_ = mail.SendMail(auth.MailAddress, message)
 	return c.JSON(http.StatusOK, response.SuccessResponse{Message: constants.ProcessingComplete})
 }
