@@ -121,7 +121,8 @@ func InviteProject(c echo.Context) error {
 		constants.MailBody +
 			constants.Params.FrontUrl + "#/join/" + token
 	_ = mail.SendMail(auth.MailAddress, message)
-	return c.JSON(http.StatusOK, response.SuccessResponse{Message: constants.ProcessingComplete})
+	return c.JSON(http.StatusOK,
+		response.UserProject{UserId: inviteInfo.UserId, ProjectId: inviteInfo.ProjectId})
 }
 
 func JoinProject(c echo.Context) error {
