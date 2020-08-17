@@ -1,5 +1,5 @@
 # タスク管理アプリケーションのAPI
-※local mailサーバーは立てれていないので、環境変数を除外しました。よってmail機能は動きません。
+※local mailサーバーは立てれていないので、環境変数を除外しました。なのでmail機能は動きません。
 
 ### アーキテクチャ
 ![001](https://user-images.githubusercontent.com/47819815/89103672-72fde180-d44e-11ea-88d8-541a3e9fe64c.jpeg)
