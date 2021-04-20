@@ -1,4 +1,4 @@
-package data
+package infrastructure
 
 import (
 	_ "github.com/go-sql-driver/mysql" //コード内で直接参照するわけではないが、依存関係のあるパッケージには最初にアンダースコア_をつける

@@ -161,6 +161,21 @@ PRIMARY KEY (`comment_img_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
+DROP TABLE IF EXISTS `sample`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+SET character_set_client = utf8mb4 ;
+CREATE TABLE `sample` (
+`sample_id` int(11) NOT NULL AUTO_INCREMENT,
+`numa` int(11) NOT NULL ,
+`numb` int(11) NOT NULL,
+`numc` int(11) NOT NULL ,
+`create_at` timestamp  default current_timestamp,
+`update_at` timestamp default current_timestamp on update current_timestamp,
+PRIMARY KEY (`sample_id`),
+unique num_unique (numa, numb, numc)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
 insert into user (user_name) values ('test');
 insert into auth (user_id, login_id, password, mail_address) values
 ((select max(user_id) from user), 'test', '$2a$10$.QOu/aJH9U45RbfQyaySOeVScRmDJixLwtf1xiuBzwmZvpGX2W6qO', 'reporter@reporter.com');

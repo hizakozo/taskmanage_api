@@ -2,15 +2,25 @@ package interceptor
 
 import (
 	"github.com/labstack/echo"
-	"taskmanage_api/src/data"
+	"taskmanage_api/src/domain"
 	"taskmanage_api/src/exception"
 )
 
-var User = data.User{}
+var User = domain.User{}
 
-func CsrfAuth(next echo.HandlerFunc) echo.HandlerFunc {
+type intercept struct {
+	rr domain.RedisRepository
+}
+
+func NewIntercept(rr domain.RedisRepository) *intercept {
+	return &intercept{
+		rr: rr,
+	}
+}
+
+func (i *intercept)CsrfAuth(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		user, err := data.RedisGet(c.Request().Header.Get("user_token"))
+		user, err := i.rr.RedisGet(c.Request().Header.Get("user_token"))
 		if err != nil {
 			return exception.TokenException(c)
 		}
@@ -18,7 +28,7 @@ func CsrfAuth(next echo.HandlerFunc) echo.HandlerFunc {
 		if err := next(c); err != nil {
 			c.Error(err)
 		}
-		User = data.User{}
+		User = domain.User{}
 		return nil
 	}
 }

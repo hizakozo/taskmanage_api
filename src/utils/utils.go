@@ -37,7 +37,3 @@ func CreateSafetyPass(password string) string {
 func PasswordVerify(hash, pw string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(pw))
 }
-
-func IsErr(err error) bool {
-	return err != nil
-}
