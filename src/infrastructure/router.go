@@ -41,7 +41,7 @@ func init() {
 	e.GET("/tickets/:project_id", func(c echo.Context) error { return tc.GetList(c) }, i.CsrfAuth)
 	e.PUT("/tickets/update", func(c echo.Context) error { return tc.Update(c) }, i.CsrfAuth)
 	e.PUT("/tickets/status", func(c echo.Context) error { return tc.ChangeStatus(c) }, i.CsrfAuth)
-	e.GET("/tickets/detail/:ticket_id", func(c echo.Context) error { return tc.Delete(c) }, i.CsrfAuth)
+	e.GET("/tickets/detail/:ticket_id", func(c echo.Context) error { return tc.Detail(c) }, i.CsrfAuth)
 	e.DELETE("/tickets/delete/:ticket_id", func(c echo.Context) error { return tc.Delete(c) }, i.CsrfAuth)
 
 	cu := usecase.NewCommentUsecase(ur, tr, cr)
@@ -68,6 +68,6 @@ func init() {
 	Echo = e
 }
 
-func Run() {
+func AppRun() {
 	Echo.Logger.Fatal(Echo.Start(":1313"))
 }
