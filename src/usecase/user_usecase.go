@@ -1,15 +1,16 @@
 package usecase
 
 import (
-	"encoding/json"
 	"fmt"
-	"github.com/labstack/echo"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/labstack/echo/v4"
 	"mime/multipart"
 	"taskmanage_api/src/constants"
 	"taskmanage_api/src/domain"
 	"taskmanage_api/src/exception"
 	"taskmanage_api/src/response"
 	"taskmanage_api/src/utils"
+	"time"
 )
 
 type userUseCase struct {
@@ -46,11 +47,17 @@ func (uu *userUseCase) SignIn(loginId, password string) (*response.LoginResponse
 	if err != nil {
 		return nil, err
 	}
-	var userToken, _ = utils.MakeRandomStr()
-	userJson, _ := json.Marshal(user)
-	uu.rr.RedisSet(string(userJson), userToken)
 
-	return &response.LoginResponse{UserToken: userToken, UserId: user.ID}, nil
+	token := jwt.New(jwt.SigningMethodHS256)
+	claims := token.Claims.(jwt.MapClaims)
+	claims["user_id"] = user.ID
+	claims["admin"] = true
+	claims["exp"] = time.Now().Add(time.Minute * 24).Unix()
+	t, err := token.SignedString([]byte("secret"))
+	if err != nil {
+		return nil, err
+	}
+	return &response.LoginResponse{UserToken: t, UserId: user.ID}, nil
 }
 
 func (uu *userUseCase) SignUp(name, loginId, password, mailAddress string, avatar *multipart.FileHeader, c echo.Context) error {

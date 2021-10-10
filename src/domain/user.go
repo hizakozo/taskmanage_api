@@ -1,7 +1,7 @@
 package domain
 
 import (
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"mime/multipart"
 	"taskmanage_api/src/response"
 )

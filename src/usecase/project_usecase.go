@@ -2,7 +2,7 @@ package usecase
 
 import (
 	"encoding/json"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"taskmanage_api/src/constants"
 	"taskmanage_api/src/domain"
 	"taskmanage_api/src/exception"

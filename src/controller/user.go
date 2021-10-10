@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
 	"gopkg.in/go-playground/validator.v9"
 	"net/http"

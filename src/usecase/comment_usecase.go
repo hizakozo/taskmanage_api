@@ -1,7 +1,7 @@
 package usecase
 
 import (
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	"taskmanage_api/src/domain"
 	"taskmanage_api/src/exception"
 	"taskmanage_api/src/response"
